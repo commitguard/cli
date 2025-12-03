@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/author/library.git"
+    "url": "git+https://github.com/moshetanzer/commitguard.git"
   },
   "exports": {
     ".": "./dist/index.mjs",
