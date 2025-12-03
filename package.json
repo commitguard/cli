@@ -3,15 +3,10 @@
   "type": "module",
   "version": "0.0.1",
   "description": "AI-powered git commit checker that blocks bad code before it ships",
-  "author": "Author Name <author.name@mail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/author/library#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/author/library.git"
-  },
-  "bugs": {
-    "url": "https://github.com/author/library/issues"
   },
   "exports": {
     ".": "./dist/index.mjs",
