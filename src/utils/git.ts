@@ -3,8 +3,9 @@ import micromatch from 'micromatch'
 
 export function getStagedDiff(ignorePatterns: string[]): string {
   try {
+    // TODO: let user set speed vs accuracy tradeoff which we should use unifed=7 for speed and no function-context
     const fullDiff = execSync(
-      'git diff --cached --unified=10 --no-color --minimal --ignore-all-space --function-context --diff-algorithm=histogram --diff-filter=AMC',
+      'git diff --cached --no-color --minimal --ignore-all-space --function-context --diff-algorithm=histogram --diff-filter=AMC',
       {
         encoding: 'utf8',
         maxBuffer: 10 * 1024 * 1024,
