@@ -10,7 +10,7 @@ export async function sendToCommitGuard(diff: string, eslint: Record<string, any
     )
   }
 
-  const apiUrl = process.env.COMMITGUARD_API_URL || 'https://api.commitguard.dev/v1/check'
+  const apiUrl = process.env.COMMITGUARD_API_URL || 'https://api.commitguard.dev/v1/analyze'
 
   const response = await fetch(apiUrl, {
     method: 'POST',
