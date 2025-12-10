@@ -3,13 +3,17 @@
 import process from 'node:process'
 import { consola } from 'consola'
 import pkg from '../package.json'
-import { deleteApiKey, getApiKey, saveApiKey } from './utils/apikey'
+import { cacheDir, deleteApiKey, getApiKey, saveApiKey } from './utils/apikey'
 import { runPreCommit } from './utils/commit'
 import { installHooks, listHooks, removeHooks } from './utils/install'
 
-const command = process.argv[2];
+const command = process.argv[2]
 
-(async () => {
+// Constants for API key masking
+const MASK_THRESHOLD = 8
+const SHOW_CHARS = 4
+
+;(async () => {
   try {
     switch (command) {
       case 'init':
@@ -34,7 +38,7 @@ const command = process.argv[2];
         }
         saveApiKey(apiKey)
         consola.success('API key saved globally!')
-        consola.info('The key is stored in ~/.cache/commitguard/')
+        consola.info(`The key is stored in ${cacheDir}`)
         break
       }
       case 'get-key': {
@@ -45,9 +49,11 @@ const command = process.argv[2];
           consola.info('Or use environment variable: COMMITGUARD_API_KEY')
         }
         else {
-          const masked = key.length > 8 ? `${key.substring(0, 4)}...${key.substring(key.length - 4)}` : '****'
+          const masked = key.length > MASK_THRESHOLD
+            ? `${key.substring(0, SHOW_CHARS)}...${key.substring(key.length - SHOW_CHARS)}`
+            : '****'
           consola.success(`API key found: ${masked}`)
-          consola.info('The key is stored in ~/.cache/commitguard/')
+          consola.info(`The key is stored in ${cacheDir}`)
         }
         break
       }

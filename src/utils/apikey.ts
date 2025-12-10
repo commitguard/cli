@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import process from 'node:process'
 import { FlatCache } from 'flat-cache'
 
-const cacheDir = join(homedir(), '.cache', 'commitguard')
+export const cacheDir = join(homedir(), '.cache', 'commitguard')
 
 const cache = new FlatCache({
   cacheDir,
