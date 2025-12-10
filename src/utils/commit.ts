@@ -93,6 +93,9 @@ export async function runPreCommit() {
     process.exit(1)
   }
   catch (err: any) {
+    if (err instanceof Error && err.name === 'ExitPromptError') {
+      consola.log('👋 until next time!')
+    }
     const failOpen = config.failOpen || process.env.COMMITGUARD_FAIL_OPEN === 'true'
 
     if (failOpen) {
