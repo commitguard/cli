@@ -92,19 +92,21 @@ export async function runPreCommit() {
     consola.log('\n💡 To bypass: Add --skip anywhere in your commit message\n')
     process.exit(1)
   }
-  catch (err: any) {
-    if (err instanceof Error && err.name === 'ExitPromptError') {
+  catch (err) {
+    const error = err as Error
+
+    if (error.name === 'ExitPromptError') {
       consola.log('👋 until next time!')
     }
     const failOpen = config.failOpen || process.env.COMMITGUARD_FAIL_OPEN === 'true'
 
     if (failOpen) {
       consola.warn('⚠️  CommitGuard service unavailable, allowing commit')
-      consola.warn(`   Error: ${err.message}\n`)
+      consola.warn(`   Error: ${error.message}\n`)
       return
     }
 
-    consola.error('❌ CommitGuard error:', err.message)
+    consola.error('❌ CommitGuard error:', error.message)
     consola.error('\nTo skip this check, set COMMITGUARD_FAIL_OPEN=true\n')
     process.exit(1)
   }
