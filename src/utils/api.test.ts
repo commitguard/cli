@@ -4,6 +4,11 @@ import { sendToCommitGuard } from './api'
 
 globalThis.fetch = vi.fn()
 
+// Mock the apikey module
+vi.mock('./apikey', () => ({
+  getApiKey: vi.fn(),
+}))
+
 describe('sendToCommitGuard', () => {
   const mockDiff = 'diff --git a/file.ts'
   const mockEslint = { errors: [], warnings: [] }
@@ -18,9 +23,10 @@ describe('sendToCommitGuard', () => {
     failOpen: false,
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
-    process.env.COMMITGUARD_API_KEY = 'test-api-key'
+    const { getApiKey } = await import('./apikey')
+    vi.mocked(getApiKey).mockReturnValue('test-api-key')
     delete process.env.COMMITGUARD_API_URL
   })
 
@@ -29,11 +35,12 @@ describe('sendToCommitGuard', () => {
   })
 
   it('should throw error when API key is missing', async () => {
-    delete process.env.COMMITGUARD_API_KEY
+    const { getApiKey } = await import('./apikey')
+    vi.mocked(getApiKey).mockReturnValue(null)
 
     await expect(
       sendToCommitGuard(mockDiff, mockEslint, mockConfig),
-    ).rejects.toThrow('Missing CommitGuard API key. Set COMMITGUARD_API_KEY environment variable.')
+    ).rejects.toThrow('Missing CommitGuard API key. Set COMMITGUARD_API_KEY environment variable or save globally with `commitguard set-key <api-key>`.')
   })
 
   it('should use default API URL when not provided', async () => {

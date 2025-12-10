@@ -1,12 +1,13 @@
 import type { CommitGuardConfig, CommitGuardResponse } from '../types'
 import process from 'node:process'
+import { getApiKey } from './apikey'
 
 export async function sendToCommitGuard(diff: string, eslint: Record<string, any>, config: CommitGuardConfig): Promise<CommitGuardResponse> {
-  const apiKey = process.env.COMMITGUARD_API_KEY
+  const apiKey = getApiKey()
 
   if (!apiKey) {
     throw new Error(
-      'Missing CommitGuard API key. Set COMMITGUARD_API_KEY environment variable.',
+      'Missing CommitGuard API key. Set COMMITGUARD_API_KEY environment variable or save globally with `commitguard set-key <api-key>`.',
     )
   }
 
