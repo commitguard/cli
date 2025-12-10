@@ -5,6 +5,7 @@ import { consola } from 'consola'
 import pkg from '../package.json'
 import { runPreCommit } from './utils/commit'
 import { installHooks, listHooks, removeHooks } from './utils/install'
+import { manageGlobalKey } from './utils/key'
 
 const command = process.argv[2];
 
@@ -25,6 +26,9 @@ const command = process.argv[2];
       case 'uninstall':
         await removeHooks()
         break
+      case 'keys':
+        await manageGlobalKey()
+        break
       default:
         consola.box(`
 CommitGuard - AI-powered git commit checker v${pkg.version}
@@ -33,6 +37,7 @@ Usage:
   commitguard init          Install git hooks
   commitguard list          Show all installed hooks
   commitguard remove        Remove CommitGuard hooks
+  commitguard keys          Manage global API key
   commitguard pre-commit    Run pre-commit check (used by hook)
 
 After installation, CommitGuard runs automatically on every commit.`)
