@@ -3,11 +3,11 @@ import process from 'node:process'
 import { getGlobalKey } from './key'
 
 export async function sendToCommitGuard(diff: string, eslint: Record<string, any>, config: CommitGuardConfig): Promise<CommitGuardResponse> {
-  const apiKey = getGlobalKey() || process.env.COMMITGUARD_API_KEY
+  const apiKey = process.env.COMMITGUARD_API_KEY || getGlobalKey() || null
 
   if (!apiKey) {
     throw new Error(
-      'Missing CommitGuard API key. Set global api key using commitguard keys or add a COMMITGUARD_API_KEY environment variable.',
+      'No API key found. Set one globally with "commitguard keys" or add COMMITGUARD_API_KEY to your .env file. Get your free API key at https://commitguard.dev',
     )
   }
 
