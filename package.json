@@ -32,6 +32,8 @@
   },
   "dependencies": {
     "@inquirer/confirm": "^6.0.1",
+    "@inquirer/input": "^5.0.2",
+    "@napi-rs/keyring": "^1.2.0",
     "consola": "^3.4.2",
     "dotenv": "^17.2.3",
     "find-up": "^8.0.0",
