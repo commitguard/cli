@@ -9,7 +9,7 @@ export function setGlobalKey(apiKey: string) {
   if (!apiKey || apiKey.trim() === '') {
     throw new Error('API key cannot be empty')
   }
-  if (apiKey.startsWith('sk-') === false) {
+  if (apiKey.startsWith('sk_') === false) {
     throw new Error('Invalid API key format. API key should start with "sk_"')
   }
   store.setPassword(apiKey)
@@ -34,21 +34,47 @@ export async function manageGlobalKey() {
       })
       if (shouldDelete) {
         deleteGlobalKey()
-        consola.log('Global API key deleted.')
+        consola.success('Global API key deleted.')
       }
       else {
-        consola.log('Global API key remains unchanged.')
+        consola.info('Global API key remains unchanged.')
       }
     }
     else {
-      const apiKey = await input({
-        message: 'Enter your CommitGuard API key to set it globally:',
-      })
-      setGlobalKey(apiKey)
-      consola.success('Global API key set successfully.')
+      consola.box(
+        `You can set a global API key for CommitGuard or add an env in each project.
+
+The env in each project takes precedence over the global key for that project.
+
+To get your free API key visit https://commitguard.dev`,
+      )
+
+      let isValid = false
+
+      while (!isValid) {
+        const apiKey = await input({
+          message: 'Enter your CommitGuard API key:',
+        })
+
+        try {
+          setGlobalKey(apiKey)
+          consola.success('Global API key set successfully.')
+          isValid = true
+        }
+        catch (validationError) {
+          consola.warn((validationError as Error).message)
+        }
+      }
     }
   }
   catch (error) {
-    consola.error(`Error managing global API key: ${(error as Error).message}`)
+    const err = error as Error
+
+    if (err.name === 'ExitPromptError') {
+      consola.log('\n👋 Until next time!')
+      return
+    }
+
+    consola.error(`Error managing global API key: ${err.message}`)
   }
 }
