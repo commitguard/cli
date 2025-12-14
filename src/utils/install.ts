@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import process from 'node:process'
 import { consola } from 'consola'
 import { getEslintRules } from './eslint'
+import { getGlobalKey } from './key'
 
 const COMMITGUARD_MARKER = '# CommitGuard commit-msg hook'
 
@@ -72,14 +73,17 @@ exit 0
     overrideCache: true,
   })
   consola.success('ESLint configuration loaded.')
+  const apiKey
+    = process.env.COMMITGUARD_API_KEY
+      ?? getGlobalKey()
 
   const steps = [
-    !process.env.COMMITGUARD_API_KEY
-      ? 'Set your API key: export COMMITGUARD_API_KEY=your_key_here'
+    !apiKey
+      ? 'Set your API key with "commitguard keys" or set COMMITGUARD_API_KEY env variable'
       : null,
     'Make a commit — CommitGuard will run automatically',
     'To bypass checks: add --skip anywhere in your commit message',
-    'Optional: create commitguard.config.json to customize checks',
+    'CommitGuard was installed successfully with default settings. Customize it with "commitguard config"',
   ].filter(Boolean)
 
   consola.box({
