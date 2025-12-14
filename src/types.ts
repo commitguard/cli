@@ -5,8 +5,9 @@ export interface CommitGuardConfig {
     codeQuality?: boolean
     architecture?: boolean
   }
-  speed?: 'fast' | 'balanced' | 'thorough'
+  contextMode?: 'smart' | 'all' | 'minimal'
   failOpen?: boolean
+
 }
 
 export interface CommitGuardIssue {
