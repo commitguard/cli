@@ -107,7 +107,6 @@ export async function runPreCommit() {
     }
 
     consola.error('❌ CommitGuard error:', error.message)
-    consola.error('\nTo skip this check, set COMMITGUARD_FAIL_OPEN=true\n')
     process.exit(1)
   }
 }
