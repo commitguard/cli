@@ -4,6 +4,7 @@ import process from 'node:process'
 import { consola } from 'consola'
 import pkg from '../package.json'
 import { runPreCommit } from './utils/commit'
+import { manageConfig } from './utils/config'
 import { installHooks, listHooks, removeHooks } from './utils/install'
 import { manageGlobalKey } from './utils/key'
 
@@ -14,6 +15,9 @@ const command = process.argv[2];
     switch (command) {
       case 'init':
         await installHooks()
+        break
+      case 'config':
+        await manageConfig()
         break
       case 'pre-commit':
         await runPreCommit()
@@ -37,6 +41,7 @@ Usage:
   commitguard init          Install git hooks
   commitguard list          Show all installed hooks
   commitguard remove        Remove CommitGuard hooks
+  commitguard config        Manage checks configuration
   commitguard keys          Manage global API key
   commitguard pre-commit    Run pre-commit check (used by hook)
 
