@@ -1,13 +1,10 @@
 export interface CommitGuardConfig {
-  checks?: {
+  checks: {
     security?: boolean
     performance?: boolean
     codeQuality?: boolean
     architecture?: boolean
   }
-  contextMode?: 'smart' | 'all' | 'minimal'
-  failOpen?: boolean
-
 }
 
 export interface CommitGuardIssue {
