@@ -3,6 +3,7 @@
 import process from 'node:process'
 import { consola } from 'consola'
 import pkg from '../package.json'
+import { bypassCommitGuard } from './utils/api'
 import { runPreCommit } from './utils/commit'
 import { manageConfig } from './utils/config'
 import { installHooks, listHooks, removeHooks } from './utils/install'
@@ -32,6 +33,9 @@ const command = process.argv[2];
         break
       case 'keys':
         await manageGlobalKey()
+        break
+      case 'bypass':
+        await bypassCommitGuard()
         break
       default:
         consola.box(`
