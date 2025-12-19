@@ -2,12 +2,15 @@
 
 import process from 'node:process'
 import { consola } from 'consola'
-import pkg from '../package.json'
+import updateNotifier from 'update-notifier'
+import pkg from '../package.json' assert { type: 'json' }
 import { bypassCommitGuard } from './utils/api'
 import { runPreCommit } from './utils/commit'
 import { manageConfig } from './utils/config'
 import { installHooks, listHooks, removeHooks } from './utils/install'
 import { manageGlobalKey } from './utils/key'
+
+updateNotifier({ pkg }).notify()
 
 const command = process.argv[2];
 
