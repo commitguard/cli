@@ -1,4 +1,4 @@
-import confirm from '@inquirer/confirm'
+import { confirm } from '@clack/prompts'
 import input from '@inquirer/input'
 import { Entry } from '@napi-rs/keyring'
 import { consola } from 'consola'
@@ -27,10 +27,10 @@ export async function manageGlobalKey() {
   try {
     const existingKey = getGlobalKey()
     if (existingKey) {
-      consola.log('A global API key is already set.')
+      consola.log('An existing API key was found.')
       const shouldDelete = await confirm({
         message: 'Do you want to delete the existing global API key?',
-        default: false,
+        initialValue: false,
       })
       if (shouldDelete) {
         deleteGlobalKey()
