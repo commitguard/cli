@@ -14,8 +14,6 @@ describe('sendToCommitGuard', () => {
       codeQuality: true,
       architecture: true,
     },
-    speed: 'balanced',
-    failOpen: false,
   }
 
   beforeEach(() => {
@@ -115,7 +113,6 @@ describe('sendToCommitGuard', () => {
         codeQuality: true,
         architecture: true,
       },
-      failOpen: false,
     }
 
     const mockResponse: CommitGuardResponse = {
@@ -195,7 +192,6 @@ describe('sendToCommitGuard', () => {
   it('should handle different speed configurations', async () => {
     const fastConfig: CommitGuardConfig = {
       ...mockConfig,
-      speed: 'fast',
     }
 
     const mockResponse: CommitGuardResponse = {
