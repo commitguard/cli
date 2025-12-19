@@ -1,6 +1,6 @@
 import type { CommitGuardIssue } from '../types'
 import process from 'node:process'
-import confirm from '@inquirer/confirm'
+import { confirm } from '@clack/prompts'
 import { consola } from 'consola'
 import ignoreConfig from '../data/ignore.json'
 import { sendToCommitGuard } from './api'
@@ -83,7 +83,7 @@ export async function runPreCommit() {
       consola.log('To bypass this check, add --skip anywhere in your commit message')
       process.exit(1)
     }
-    const confirmed = await confirm({ message: 'Do you want to ignore these issues and commit anyway?' })
+    const confirmed = await confirm({ message: 'Do you want to ignore these issues and commit anyway?', initialValue: false })
 
     if (confirmed) {
       consola.warn('⚠️  Commit forced by user despite detected issues.\n')
@@ -98,7 +98,8 @@ export async function runPreCommit() {
     if (error.name === 'ExitPromptError') {
       consola.log('👋 until next time!')
     }
-    const failOpen = config.failOpen || process.env.COMMITGUARD_FAIL_OPEN === 'true'
+
+    const failOpen = process.env.COMMITGUARD_FAIL_OPEN === 'true'
 
     if (failOpen) {
       consola.warn('⚠️  CommitGuard service unavailable, allowing commit')
