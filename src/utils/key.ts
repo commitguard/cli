@@ -1,17 +1,10 @@
-import { confirm } from '@clack/prompts'
-import input from '@inquirer/input'
+import { confirm, text } from '@clack/prompts'
 import { Entry } from '@napi-rs/keyring'
 import { consola } from 'consola'
 
 const store = new Entry('commit_guard', 'global_key')
 
-export function setGlobalKey(apiKey: string) {
-  if (!apiKey || apiKey.trim() === '') {
-    throw new Error('API key cannot be empty')
-  }
-  if (apiKey.startsWith('sk_') === false) {
-    throw new Error('Invalid API key format. API key should start with "sk_"')
-  }
+function setGlobalKey(apiKey: string) {
   store.setPassword(apiKey)
 }
 
@@ -19,7 +12,7 @@ export function getGlobalKey() {
   return store.getPassword()
 }
 
-export function deleteGlobalKey() {
+function deleteGlobalKey() {
   store.deletePassword()
 }
 
@@ -49,21 +42,22 @@ The env in each project takes precedence over the global key for that project.
 To get your free API key visit https://commitguard.dev`,
       )
 
-      let isValid = false
-
-      while (!isValid) {
-        const apiKey = await input({
-          message: 'Enter your CommitGuard API key:',
-        })
-
-        try {
-          setGlobalKey(apiKey)
-          consola.success('Global API key set successfully.')
-          isValid = true
-        }
-        catch (validationError) {
-          consola.warn((validationError as Error).message)
-        }
+      const apiKey = await text({
+        message: 'Enter your CommitGuard API key:',
+        placeholder: 'sk_XXXXXXXXXXXXXXXXXXXXXX',
+        validate: (value) => {
+          if (!value || value.trim() === '') {
+            throw new Error('API key cannot be empty')
+          }
+          if (value.startsWith('sk_') === false) {
+            throw new Error('Invalid API key format. API key should start with "sk_"')
+          }
+          return undefined
+        },
+      })
+      if (typeof apiKey === 'string') {
+        setGlobalKey(apiKey)
+        consola.success('Global API key set successfully.')
       }
     }
   }

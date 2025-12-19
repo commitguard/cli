@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
-    "@inquirer/input": "^5.0.2",
     "@napi-rs/keyring": "^1.2.0",
     "consola": "^3.4.2",
     "dotenv": "^17.2.3",
@@ -43,13 +42,13 @@
     "update-notifier": "^7.3.1"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^6.2.0",
+    "@antfu/eslint-config": "^6.7.1",
     "@types/micromatch": "^4.0.10",
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.10.4",
     "@types/update-notifier": "^6.0.8",
-    "bumpp": "^10.3.1",
-    "eslint": "^9.39.1",
-    "tsdown": "^0.18.0",
+    "bumpp": "^10.3.2",
+    "eslint": "^9.39.2",
+    "tsdown": "^0.18.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
   }
