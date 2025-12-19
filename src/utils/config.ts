@@ -101,8 +101,6 @@ export async function manageConfig() {
   const currentConfig = loadConfig()
 
   intro(`CommitGuard Configuration`)
-  consola.info(`Project: ${projectId}`)
-
   const enabledChecks = await multiselect({
     message: 'Select enabled checks',
     options: [
