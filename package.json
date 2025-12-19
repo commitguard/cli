@@ -16,7 +16,8 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "bin": {
-    "commitguard": "./dist/index.mjs"
+    "commitguard": "./dist/index.mjs",
+    "cg": "./dist/index.mjs"
   },
   "files": [
     "dist"
