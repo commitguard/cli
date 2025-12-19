@@ -40,12 +40,14 @@
     "dotenv": "^17.2.3",
     "find-up": "^8.0.0",
     "flat-cache": "^6.1.19",
-    "micromatch": "^4.0.8"
+    "micromatch": "^4.0.8",
+    "update-notifier": "^7.3.1"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.2.0",
     "@types/micromatch": "^4.0.10",
     "@types/node": "^24.10.1",
+    "@types/update-notifier": "^6.0.8",
     "bumpp": "^10.3.1",
     "eslint": "^9.39.1",
     "tsdown": "^0.18.0",
