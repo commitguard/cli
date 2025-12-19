@@ -46,6 +46,9 @@ if grep -q -- "--skip" "$commit_msg_file"; then
   # Remove --skip token from commit message
   sed 's/--skip//g' "$commit_msg_file" > "$commit_msg_file.tmp"
   mv "$commit_msg_file.tmp" "$commit_msg_file"
+  
+  trap '(sleep 1 && "${node}" "${cliPath}" bypass > /dev/null 2>&1 &)' EXIT
+  
   exit 0
 fi
 
