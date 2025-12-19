@@ -46,10 +46,7 @@ Usage:
   commitguard list          Show all installed hooks
   commitguard remove        Remove CommitGuard hooks
   commitguard config        Manage checks configuration
-  commitguard keys          Manage global API key
-  commitguard pre-commit    Run pre-commit check (used by hook)
-
-After installation, CommitGuard runs automatically on every commit.`)
+  commitguard keys          Manage global API key`)
     }
   }
   catch (error) {
