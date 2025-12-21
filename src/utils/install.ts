@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import process from 'node:process'
+import { confirm } from '@clack/prompts'
 import { consola } from 'consola'
 import { getEslintRules } from './eslint'
 import { getGlobalKey } from './key'
@@ -164,6 +165,16 @@ export async function removeHooks() {
     consola.error('commit-msg hook exists but is not managed by CommitGuard.')
     consola.error('Manual removal required.')
     process.exit(1)
+  }
+
+  const response = await confirm({
+    message: 'Are you sure you want to remove CommitGuard from this repository?',
+    initialValue: false,
+  })
+
+  if (!response) {
+    consola.log('CommitGuard uninstallation cancelled.')
+    return
   }
 
   unlinkSync(commitMsgPath)
