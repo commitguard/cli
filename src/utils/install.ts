@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import process from 'node:process'
-import { confirm } from '@clack/prompts'
+import { confirm, outro } from '@clack/prompts'
 import { consola } from 'consola'
 import { getEslintRules } from './eslint'
 import { getGlobalKey } from './key'
@@ -173,7 +173,7 @@ export async function removeHooks() {
   })
 
   if (!response) {
-    consola.log('CommitGuard uninstallation cancelled.')
+    outro('CommitGuard uninstallation cancelled.')
     return
   }
 
