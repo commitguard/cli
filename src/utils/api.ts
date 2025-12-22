@@ -20,6 +20,7 @@ export async function sendToCommitGuard(diff: string, eslint: Record<string, any
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
+      'User-Agent': 'commitguard-cli',
     },
     body: JSON.stringify({
       diff,
@@ -53,6 +54,7 @@ export async function bypassCommitGuard() {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
+      'User-Agent': 'commitguard-cli',
     },
     body: JSON.stringify({
       diff,
