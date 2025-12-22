@@ -1,37 +1,48 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import process from 'node:process'
-import { confirm, outro } from '@clack/prompts'
-import { consola } from 'consola'
+import { cancel, confirm, log, outro } from '@clack/prompts'
 import { getEslintRules } from './eslint'
-import { getGlobalKey } from './key'
+import { getGlobalKey, manageGlobalKey } from './key'
 
 const COMMITGUARD_MARKER = '# CommitGuard commit-msg hook'
+const GIT_DIR = '.git'
+const HOOKS_DIR = join(GIT_DIR, 'hooks')
+const COMMIT_MSG_HOOK_PATH = join(HOOKS_DIR, 'commit-msg')
+const MESSAGES = {
+  noGit: 'No .git folder found. Run this inside a git repository.',
+}
 
 export async function installHooks() {
-  const gitDir = '.git'
-  const hooksDir = join(gitDir, 'hooks')
-  const commitMsgPath = join(hooksDir, 'commit-msg')
-
-  if (!existsSync(gitDir)) {
-    consola.error('No .git folder found. Run this inside a git repository.')
+  if (!existsSync(GIT_DIR)) {
+    cancel(MESSAGES.noGit)
     process.exit(1)
   }
 
-  if (!existsSync(hooksDir)) {
-    mkdirSync(hooksDir, { recursive: true })
+  if (!existsSync(HOOKS_DIR)) {
+    mkdirSync(HOOKS_DIR, { recursive: true })
   }
 
-  if (existsSync(commitMsgPath)) {
-    const content = readFileSync(commitMsgPath, 'utf8')
+  if (existsSync(COMMIT_MSG_HOOK_PATH)) {
+    const content = readFileSync(COMMIT_MSG_HOOK_PATH, 'utf8')
     if (content.includes(COMMITGUARD_MARKER)) {
-      consola.success('CommitGuard hook is already installed.')
+      outro('CommitGuard is already installed.')
       return
     }
-    consola.warn('commit-msg hook already exists. Overwriting...')
+
+    const response = await confirm({
+      message: 'CommitGuard uses the git `commit-msg` hook to function properly. A commit-msg hook already exists. Do you want to overwrite it?',
+      initialValue: true,
+    })
+
+    if (!response) {
+      outro('Installation cancelled. CommitGuard was not installed.')
+      return
+    }
   }
 
-  consola.info('Installing CommitGuard git hook...')
+  log.info('Installing CommitGuard...')
+
   const node = process.execPath.replace(/\\/g, '/')
   const cliPath = require.resolve('commitguard').replace(/\\/g, '/')
 
@@ -68,103 +79,68 @@ fi
 exit 0
 `
 
-  writeFileSync(commitMsgPath, commitMsgContent, { mode: 0o755 })
+  writeFileSync(COMMIT_MSG_HOOK_PATH, commitMsgContent, { mode: 0o755 })
+  log.success('CommitGuard installed successfully.')
 
-  consola.success('CommitGuard hook installed successfully!')
+  log.info('Analyzing ESLint configuration for better checks...')
 
-  consola.info('Analyzing ESLint configuration for better checks...')
   await getEslintRules({
     overrideCache: true,
   })
-  consola.success('ESLint configuration loaded.')
-  const apiKey
-    = process.env.COMMITGUARD_API_KEY
-      ?? getGlobalKey()
 
-  const steps = [
-    !apiKey
-      ? 'Set your API key with "commitguard keys" or set COMMITGUARD_API_KEY env variable'
-      : null,
-    'Make a commit — CommitGuard will run automatically',
-    'To bypass checks: add --skip anywhere in your commit message',
-    'CommitGuard was installed successfully with default settings. Customize it with "commitguard config"',
-  ].filter(Boolean)
+  log.success('ESLint configuration loaded.')
 
-  consola.box({
-    title: 'Next Steps',
-    message: steps.map(step => `• ${step}`).join('\n'),
-  })
-}
-
-export async function listHooks() {
-  const gitDir = '.git'
-  const hooksDir = join(gitDir, 'hooks')
-
-  if (!existsSync(gitDir)) {
-    consola.error('No .git folder found. Run this inside a git repository.')
-    process.exit(1)
-  }
-
-  if (!existsSync(hooksDir)) {
-    consola.info('📋 No hooks directory found.')
-    return
-  }
-
-  const files = readdirSync(hooksDir)
-  const hooks = files.filter((file) => {
-    const filePath = join(hooksDir, file)
-    const stats = statSync(filePath)
-    return stats.isFile() && !file.endsWith('.sample') && !file.startsWith('.')
-  })
-
-  if (hooks.length === 0) {
-    consola.info('📋 No git hooks installed.')
-    return
-  }
-
-  consola.log('📋 Installed git hooks:\n')
-
-  for (const hook of hooks) {
-    const hookPath = join(hooksDir, hook)
-    const content = readFileSync(hookPath, 'utf8')
-    const isCommitGuard = content.includes(COMMITGUARD_MARKER)
-    const stats = statSync(hookPath)
-    const isExecutable = (stats.mode & 0o111) !== 0
-
-    const badge = isCommitGuard ? '🛡️  CommitGuard' : '📝'
-    const execBadge = isExecutable ? '✓' : '✗ (not executable)'
-
-    consola.log(`${badge} ${hook} ${execBadge}`)
-
-    if (isCommitGuard) {
-      consola.log(`   └─ Managed by CommitGuard`)
+  if (!getGlobalKey() && process.env.COMMITGUARD_API_KEY === undefined) {
+    const response = await confirm({
+      message: 'No global API key found. Do you want to set it now?',
+      initialValue: true,
+    })
+    if (response) {
+      await manageGlobalKey()
     }
   }
 
-  consola.log('\nRun \'commitguard remove\' to uninstall CommitGuard hooks.')
+  outro('You are all set! Make your commits and let CommitGuard secure them for you.')
 }
 
-export async function removeHooks() {
-  const gitDir = '.git'
-  const hooksDir = join(gitDir, 'hooks')
-  const commitMsgPath = join(hooksDir, 'commit-msg')
-
-  if (!existsSync(gitDir)) {
-    consola.error('No .git folder found. Run this inside a git repository.')
-    process.exit(1)
-  }
-
-  if (!existsSync(commitMsgPath)) {
-    consola.info('No CommitGuard hook found.')
+export async function listHooks() {
+  if (!existsSync(GIT_DIR) || !existsSync(HOOKS_DIR)) {
+    outro(MESSAGES.noGit)
     return
   }
 
-  const content = readFileSync(commitMsgPath, 'utf8')
+  const hooks = readdirSync(HOOKS_DIR).filter((file) => {
+    const filePath = join(HOOKS_DIR, file)
 
-  if (!content.includes(COMMITGUARD_MARKER)) {
-    consola.error('commit-msg hook exists but is not managed by CommitGuard.')
-    consola.error('Manual removal required.')
+    return (
+      statSync(filePath).isFile()
+      && !file.endsWith('.sample')
+      && !file.startsWith('.')
+      && readFileSync(filePath, 'utf8').includes(COMMITGUARD_MARKER)
+    )
+  })
+
+  if (hooks.length === 0) {
+    outro()
+    return
+  }
+
+  for (const hook of hooks) {
+    log.success(hook)
+  }
+
+  outro('Run "commitguard remove" to uninstall CommitGuard hooks.')
+}
+
+export async function removeHooks() {
+  if (!existsSync(GIT_DIR)) {
+    cancel(MESSAGES.noGit)
     process.exit(1)
+  }
+
+  if (!existsSync(COMMIT_MSG_HOOK_PATH)) {
+    log.info('CommitGuard is not installed in this repository.')
+    return
   }
 
   const response = await confirm({
@@ -177,7 +153,7 @@ export async function removeHooks() {
     return
   }
 
-  unlinkSync(commitMsgPath)
-  consola.success('CommitGuard hook removed successfully!')
-  consola.warn('Your commits will no longer be checked by CommitGuard.')
+  unlinkSync(COMMIT_MSG_HOOK_PATH)
+  log.success('CommitGuard uninstalled successfully!')
+  outro('Your commits are no longer be secured by CommitGuard.')
 }
