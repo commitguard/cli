@@ -1,7 +1,8 @@
+import { execSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import process from 'node:process'
-import { cancel, confirm, log, outro } from '@clack/prompts'
+import { cancel, confirm, log, note, outro } from '@clack/prompts'
 import { getEslintRules } from './eslint'
 import { getGlobalKey, manageGlobalKey } from './key'
 
@@ -21,6 +22,23 @@ export async function installHooks() {
 
   if (!existsSync(HOOKS_DIR)) {
     mkdirSync(HOOKS_DIR, { recursive: true })
+  }
+
+  try {
+    const gitVersion = execSync('git --version', { encoding: 'utf8' })
+    const versionMatch = gitVersion.match(/(\d+\.\d+\.\d+)/)
+    const version = versionMatch ? versionMatch[1] : '0.0.0'
+
+    if (version < '2.34.0') {
+      log.warn('Your Git version is below 2.34.0. CommitGuard requires Git 2.34.0 or higher to function properly.')
+      note('You can download the latest version of Git from https://git-scm.com/downloads', 'How to update Git')
+      return
+    }
+  }
+  catch {
+    log.warn('Unable to determine Git version. Please ensure you have Git 2.34.0 or higher installed for CommitGuard to function properly.')
+    note('You can download the latest version of Git from https://git-scm.com/downloads', 'How to update Git')
+    return
   }
 
   if (existsSync(COMMIT_MSG_HOOK_PATH)) {
