@@ -5,6 +5,9 @@ export function createDiffHash(diff: string): string {
 }
 
 export function addGitLineNumbers(diff: string): string {
+  if (!diff.trim()) {
+    return diff
+  }
   const lines = diff.split('\n')
   const result: string[] = []
   let oldLine = 0
