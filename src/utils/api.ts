@@ -2,7 +2,6 @@ import type { CommitGuardConfig, CommitGuardResponse } from '../types'
 import process from 'node:process'
 import { getLastDiff } from './git'
 import { getGlobalKey } from './key'
-import 'dotenv/config'
 
 export async function sendToCommitGuard(diff: string, eslint: Record<string, any>, config: CommitGuardConfig): Promise<CommitGuardResponse> {
   const apiKey = process.env.COMMITGUARD_API_KEY || getGlobalKey() || null
