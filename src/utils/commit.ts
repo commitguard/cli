@@ -2,12 +2,10 @@ import type { CommitGuardIssue } from '../types'
 import process from 'node:process'
 import { confirm } from '@clack/prompts'
 import { consola } from 'consola'
-import ignoreConfig from '../data/ignore.json'
 import { sendToCommitGuard } from './api'
 import { loadConfig } from './config.js'
 import { getEslintRules } from './eslint'
 import { getStagedDiff } from './git'
-import 'dotenv/config'
 
 const CATEGORY_EMOJIS = {
   security: '🚨',
@@ -31,7 +29,7 @@ export async function runPreCommit() {
     return
   }
 
-  const diff = getStagedDiff(ignoreConfig.ignore)
+  const diff = getStagedDiff()
 
   if (!diff.trim()) {
     consola.info('No staged changes to check')
