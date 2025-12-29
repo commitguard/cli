@@ -2,12 +2,12 @@ import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import process from 'node:process'
 import { consola } from 'consola'
+import stringWidth from 'string-width'
 import { sendToCommitGuard } from './api'
 import { loadConfig } from './config'
 import { getEslintRules } from './eslint'
 import { getStagedDiff } from './git'
 import { createDiffHash } from './global'
-import 'dotenv/config'
 
 const CACHE_PATH = join('.git', 'commitguard-cache.json')
 
@@ -19,10 +19,31 @@ interface CacheData {
 }
 
 const CATEGORY_LABELS = {
-  security: '[security]',
-  performance: '[performance]',
-  code_quality: '[code quality]',
-  architecture: '[architecture]',
+  security: '🚨 [SECURITY]',
+  performance: '🚀 [PERFORMANCE]',
+  code_quality: '✨ [CODE QUALITY]',
+  architecture: '🏗️ [ARCHITECTURE]',
+}
+const SEVERITY = {
+  critical: 'CRITICAL',
+  warning: 'WARNING',
+  suggestion: 'SUGGESTION',
+}
+const LABEL_WIDTH = Math.max(
+  ...Object.values(CATEGORY_LABELS).map(label => stringWidth(label)),
+)
+
+function padLabel(label: string): string {
+  const pad = LABEL_WIDTH - stringWidth(label)
+  return label + ' '.repeat(pad)
+}
+
+const SEVERITY_WIDTH = Math.max(
+  ...Object.values(SEVERITY).map(sev => stringWidth(sev) + 2),
+)
+function padSeverity(severity: string): string {
+  const pad = SEVERITY_WIDTH - stringWidth(severity)
+  return severity + ' '.repeat(pad)
 }
 
 let memoryCache: CacheData | null = null
@@ -112,7 +133,10 @@ export function getCachedAnalysis(): { analysis: any, age: number } | null {
   const diff = getStagedDiff()
 
   if (!diff.trim()) {
-    return null
+    return {
+      analysis: { status: 'pass', issues: [] },
+      age: 0,
+    }
   }
 
   const diffHash = createDiffHash(diff)
@@ -137,7 +161,6 @@ export function getCachedAnalysis(): { analysis: any, age: number } | null {
 
 export async function validateCommit(): Promise<void> {
   const cached = getCachedAnalysis()
-
   if (!cached) {
     await onStaged()
 
@@ -184,12 +207,14 @@ async function displayResults(analysis: any): Promise<void> {
     for (let i = 0; i < issues.length; i++) {
       const issue = issues[i]
       const prefix = i === lastIdx ? '   └─' : '   ├─'
-      const emoji = CATEGORY_LABELS[issue.category as keyof typeof CATEGORY_LABELS] ?? '•'
+      const rawLabel = CATEGORY_LABELS[issue.category as keyof typeof CATEGORY_LABELS] ?? '•'
+      const label = padLabel(rawLabel)
+      const severity = padSeverity(issue.severity ? `[${issue.severity.toUpperCase()}]` : '[INFO]')
       const location = issue.file
         ? ` (${issue.file}${issue.line ? `:${issue.line}` : ''})`
         : ''
 
-      output += `${prefix} ${emoji} ${issue.message}${location}\n`
+      output += `${prefix} ${label} ${severity} ${issue.message}${location}\n`
     }
     process.stdout.write(output)
   }
