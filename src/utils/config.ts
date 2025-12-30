@@ -31,6 +31,11 @@ function getDefaultConfig(): CommitGuardConfig {
       codeQuality: true,
       architecture: true,
     },
+    severityLevels: {
+      critical: true,
+      warning: true,
+      suggestion: true,
+    },
   }
 }
 
@@ -102,7 +107,7 @@ export async function manageConfig() {
 
   intro(`CommitGuard Configuration`)
   const enabledChecks = await multiselect({
-    message: 'Select enabled checks',
+    message: 'Select enabled checks for this project:',
     options: [
       { value: 'security', label: 'Security' },
       { value: 'performance', label: 'Performance' },
@@ -114,7 +119,19 @@ export async function manageConfig() {
       .map(([key]) => key),
   })
 
-  if (isCancel(enabledChecks)) {
+  const enabledSeverity = await multiselect({
+    message: 'Select severity levels for enabled checks:',
+    options: [
+      { value: 'suggestion', label: 'Suggestion' },
+      { value: 'warning', label: 'Warning' },
+      { value: 'critical', label: 'Critical' },
+    ],
+    initialValues: Object.entries(currentConfig.severityLevels)
+      .filter(([_, enabled]) => enabled)
+      .map(([key]) => key),
+  })
+
+  if (isCancel(enabledChecks) || isCancel(enabledSeverity)) {
     cancel('Configuration cancelled')
     return
   }
@@ -126,6 +143,12 @@ export async function manageConfig() {
       codeQuality: enabledChecks.includes('codeQuality'),
       architecture: enabledChecks.includes('architecture'),
     },
+    severityLevels: {
+      suggestion: enabledSeverity.includes('suggestion'),
+      warning: enabledSeverity.includes('warning'),
+      critical: enabledSeverity.includes('critical'),
+    },
+
   }
 
   if (JSON.stringify(newConfig) === JSON.stringify(currentConfig)) {
