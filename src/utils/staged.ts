@@ -69,7 +69,7 @@ function readCache(): CacheData | null {
 
 function writeCache(data: CacheData): void {
   memoryCache = data
-  writeFileSync(CACHE_PATH, JSON.stringify(data, null, 2))
+  writeFileSync(CACHE_PATH, JSON.stringify(data))
 }
 
 export function clearCache(): void {
