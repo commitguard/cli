@@ -48,6 +48,11 @@ describe('loadConfig', () => {
         codeQuality: true,
         architecture: true,
       },
+      severityLevels: {
+        critical: true,
+        suggestion: true,
+        warning: true,
+      },
     })
   })
 
@@ -81,6 +86,11 @@ describe('loadConfig', () => {
           codeQuality: false,
           architecture: false,
         },
+        severityLevels: {
+          critical: true,
+          suggestion: true,
+          warning: true,
+        },
       },
     }
 
@@ -96,6 +106,11 @@ describe('loadConfig', () => {
         performance: true,
         codeQuality: true,
         architecture: true,
+      },
+      severityLevels: {
+        critical: true,
+        suggestion: true,
+        warning: true,
       },
     })
   })
@@ -121,6 +136,11 @@ describe('loadConfig', () => {
         codeQuality: true,
         architecture: true,
       },
+      severityLevels: {
+        critical: true,
+        suggestion: true,
+        warning: true,
+      },
     })
   })
 
@@ -138,6 +158,11 @@ describe('loadConfig', () => {
         performance: true,
         codeQuality: true,
         architecture: true,
+      },
+      severityLevels: {
+        critical: true,
+        suggestion: true,
+        warning: true,
       },
     })
   })
@@ -241,6 +266,11 @@ describe('manageConfig', () => {
         codeQuality: true,
         architecture: true,
       },
+      severityLevels: {
+        critical: true,
+        warning: true,
+        suggestion: true,
+      },
     }
 
     vi.mocked(fs.existsSync).mockReturnValue(true)
@@ -260,9 +290,8 @@ describe('manageConfig', () => {
 
     await manageConfig()
 
-    expect(clack.confirm).not.toHaveBeenCalled()
     expect(fs.writeFileSync).not.toHaveBeenCalled()
-    expect(clack.outro).toHaveBeenCalledWith('No changes made to the configuration.')
+    expect(clack.outro).toHaveBeenCalledWith('Configuration not saved.')
   })
 
   it('should load initial values from existing config', async () => {
@@ -272,6 +301,11 @@ describe('manageConfig', () => {
         performance: false,
         codeQuality: true,
         architecture: false,
+      },
+      severityLevels: {
+        critical: true,
+        warning: false,
+        suggestion: true,
       },
     }
 

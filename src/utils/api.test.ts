@@ -17,6 +17,11 @@ describe('sendToCommitGuard', () => {
       codeQuality: true,
       architecture: false,
     },
+    severityLevels: {
+      critical: true,
+      warning: true,
+      suggestion: true,
+    },
   }
   const mockResponse: CommitGuardResponse = {
     passed: true,
@@ -56,7 +61,7 @@ describe('sendToCommitGuard', () => {
         body: JSON.stringify({
           diff: mockDiff,
           eslint: mockEslint,
-          checks: mockConfig.checks,
+          config: mockConfig,
         }),
       },
     )
