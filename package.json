@@ -1,7 +1,7 @@
 {
   "name": "commitguard",
   "type": "module",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "AI-powered git commit checker that blocks bad code before it ships",
   "license": "MIT",
   "repository": {
