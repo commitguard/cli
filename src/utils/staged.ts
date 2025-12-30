@@ -24,11 +24,13 @@ const CATEGORY_LABELS = {
   code_quality: '✨ [CODE QUALITY]',
   architecture: '🏗️ [ARCHITECTURE]',
 }
+
 const SEVERITY = {
   critical: 'CRITICAL',
   warning: 'WARNING',
   suggestion: 'SUGGESTION',
 }
+
 const LABEL_WIDTH = Math.max(
   ...Object.values(CATEGORY_LABELS).map(label => stringWidth(label)),
 )
@@ -129,17 +131,16 @@ export async function onStaged() {
   }
 }
 
-export function getCachedAnalysis(): { analysis: any, age: number } | null {
-  const diff = getStagedDiff()
-
-  if (!diff.trim()) {
+export function getCachedAnalysis(diff?: string, diffHash?: string): { analysis: any, age: number } | null {
+  const effectiveDiff = diff ?? getStagedDiff()
+  if (!effectiveDiff.trim()) {
     return {
       analysis: { status: 'pass', issues: [] },
       age: 0,
     }
   }
 
-  const diffHash = createDiffHash(diff)
+  const effectiveDiffHash = diffHash ?? createDiffHash(effectiveDiff)
 
   const cache = readCache()
 
@@ -147,7 +148,7 @@ export function getCachedAnalysis(): { analysis: any, age: number } | null {
     return null
   }
 
-  if (cache.hash !== diffHash) {
+  if (cache.hash !== effectiveDiffHash) {
     return null
   }
 
@@ -160,11 +161,14 @@ export function getCachedAnalysis(): { analysis: any, age: number } | null {
 }
 
 export async function validateCommit(): Promise<void> {
-  const cached = getCachedAnalysis()
+  const diff = getStagedDiff()
+  const diffHash = diff.trim() ? createDiffHash(diff) : ''
+
+  const cached = getCachedAnalysis(diff, diffHash)
   if (!cached) {
     await onStaged()
 
-    const newCached = getCachedAnalysis()
+    const newCached = getCachedAnalysis(diff, diffHash)
     if (!newCached) {
       consola.error('Analysis failed')
       process.exit(1)
