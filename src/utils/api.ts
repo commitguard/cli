@@ -24,7 +24,7 @@ export async function sendToCommitGuard(diff: string, eslint: Record<string, any
     body: JSON.stringify({
       diff,
       eslint,
-      checks: config.checks,
+      config,
     }),
   })
 
