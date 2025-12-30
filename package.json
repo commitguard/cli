@@ -16,8 +16,7 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "bin": {
-    "commitguard": "./dist/index.mjs",
-    "cg": "./dist/index.mjs"
+    "commitguard": "./dist/index.mjs"
   },
   "files": [
     "dist"
@@ -39,18 +38,17 @@
     "find-up": "^8.0.0",
     "flat-cache": "^6.1.19",
     "micromatch": "^4.0.8",
-    "picocolors": "^1.1.1",
     "string-width": "^8.1.0",
     "update-notifier": "^7.3.1"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^6.7.1",
+    "@antfu/eslint-config": "^6.7.3",
     "@types/micromatch": "^4.0.10",
     "@types/node": "^24.10.4",
     "@types/update-notifier": "^6.0.8",
     "bumpp": "^10.3.2",
     "eslint": "^9.39.2",
-    "tsdown": "^0.18.1",
+    "tsdown": "^0.18.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
   }
