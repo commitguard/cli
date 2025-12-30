@@ -67,34 +67,3 @@ export async function bypassCommitGuard() {
 
   return await response.json() as { success: boolean, message: string }
 }
-
-export async function analyzeStagedDiff(diff: string) {
-  const apiKey = process.env.COMMITGUARD_API_KEY || getGlobalKey() || null
-
-  if (!apiKey) {
-    throw new Error(
-      'No API key found. Set one globally with "commitguard keys" or add COMMITGUARD_API_KEY to your .env file. Get your free API key at https://commitguard.dev',
-    )
-  }
-
-  const apiUrl = process.env.COMMITGUARD_API_ANALYZE_STAGED_URL || 'https://api.commitguard.dev/v1/analyze/staged'
-
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-      'User-Agent': 'commitguard-cli',
-    },
-    body: JSON.stringify({
-      diff,
-    }),
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`API request failed (${response.status}): ${errorText}`)
-  }
-
-  return await response.json() as { success: boolean, message: string }
-}
