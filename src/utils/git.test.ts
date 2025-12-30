@@ -1,10 +1,18 @@
 import * as childProcess from 'node:child_process'
-import micromatch from 'micromatch'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getStagedDiff } from './git'
+
+import { getLastDiff, getStagedDiff } from './git'
+import { addGitLineNumbers } from './global'
 
 vi.mock('node:child_process')
-vi.mock('micromatch')
+vi.mock('./global', () => ({
+  addGitLineNumbers: vi.fn((diff: string) => `numbered-${diff}`),
+}))
+vi.mock('../data/ignore.json', () => ({
+  default: {
+    ignore: ['node_modules/**', '*.lock', 'dist/**'],
+  },
+}))
 
 describe('getStagedDiff', () => {
   beforeEach(() => {
@@ -15,193 +23,169 @@ describe('getStagedDiff', () => {
     vi.restoreAllMocks()
   })
 
-  it('should return full diff when no ignore patterns provided', () => {
+  it('should return staged diff with line numbers', () => {
     const mockDiff = 'diff --git a/file.ts b/file.ts\n+added line'
+    vi.mocked(childProcess.execFileSync).mockReturnValue(mockDiff)
 
-    vi.mocked(childProcess.execSync).mockReturnValue(mockDiff)
+    const result = getStagedDiff()
 
-    const result = getStagedDiff([])
-
-    expect(result).toBe(mockDiff)
-    expect(childProcess.execSync).toHaveBeenCalledWith(
-      'git diff --cached --unified=10 --no-color --minimal --ignore-all-space --function-context --diff-algorithm=histogram --diff-filter=AMC',
+    expect(childProcess.execFileSync).toHaveBeenCalledWith(
+      'git',
+      [
+        'diff',
+        '--cached',
+        '--no-color',
+        '--function-context',
+        '--diff-algorithm=histogram',
+        '--diff-filter=AMC',
+        '--',
+        '.',
+        ':(exclude)node_modules/**',
+        ':(exclude)*.lock',
+        ':(exclude)dist/**',
+      ],
       {
         encoding: 'utf8',
         maxBuffer: 10 * 1024 * 1024,
         stdio: ['pipe', 'pipe', 'ignore'],
       },
     )
+    expect(addGitLineNumbers).toHaveBeenCalledWith(mockDiff)
+    expect(result).toBe(`numbered-${mockDiff}`)
   })
 
   it('should return empty string when git command fails', () => {
-    vi.mocked(childProcess.execSync).mockImplementation(() => {
-      throw new Error('Git error')
+    vi.mocked(childProcess.execFileSync).mockImplementation(() => {
+      throw new Error('Not a git repository')
     })
 
-    const result = getStagedDiff([])
+    const result = getStagedDiff()
 
     expect(result).toBe('')
   })
 
-  it('should filter out files matching ignore patterns', () => {
-    const mockDiff = `diff --git a/src/index.ts b/src/index.ts
-+code
-diff --git a/test/index.test.ts b/test/index.test.ts
-+test code
-diff --git a/docs/README.md b/docs/README.md
-+docs`
+  it('should handle empty diff', () => {
+    vi.mocked(childProcess.execFileSync).mockReturnValue('')
 
-    vi.mocked(childProcess.execSync).mockReturnValue(mockDiff)
-    vi.mocked(micromatch.isMatch)
-      .mockReturnValueOnce(false)
-      .mockReturnValueOnce(true)
-      .mockReturnValueOnce(false)
+    const result = getStagedDiff()
 
-    const result = getStagedDiff(['**/*.test.ts'])
-
-    expect(result).toContain('diff --git a/src/index.ts b/src/index.ts')
-    expect(result).toContain('diff --git a/docs/README.md b/docs/README.md')
-    expect(result).not.toContain('diff --git a/test/index.test.ts b/test/index.test.ts')
-    expect(micromatch.isMatch).toHaveBeenCalledWith('src/index.ts', ['**/*.test.ts'], { dot: true, matchBase: true })
-    expect(micromatch.isMatch).toHaveBeenCalledWith('test/index.test.ts', ['**/*.test.ts'], { dot: true, matchBase: true })
-    expect(micromatch.isMatch).toHaveBeenCalledWith('docs/README.md', ['**/*.test.ts'], { dot: true, matchBase: true })
+    expect(addGitLineNumbers).toHaveBeenCalledWith('')
+    expect(result).toBe('numbered-')
   })
 
-  it('should handle multiple ignore patterns', () => {
-    const mockDiff = `diff --git a/src/index.ts b/src/index.ts
-+code
-diff --git a/test/index.test.ts b/test/index.test.ts
-+test code
-diff --git a/dist/bundle.js b/dist/bundle.js
-+compiled`
+  it('should use correct buffer size for large diffs', () => {
+    const largeDiff = 'a'.repeat(5 * 1024 * 1024)
+    vi.mocked(childProcess.execFileSync).mockReturnValue(largeDiff)
 
-    vi.mocked(childProcess.execSync).mockReturnValue(mockDiff)
-    vi.mocked(micromatch.isMatch)
-      .mockReturnValueOnce(false)
-      .mockReturnValueOnce(true)
-      .mockReturnValueOnce(true)
+    getStagedDiff()
 
-    const result = getStagedDiff(['**/*.test.ts', 'dist/**'])
+    expect(childProcess.execFileSync).toHaveBeenCalledWith(
+      'git',
+      expect.any(Array),
+      expect.objectContaining({
+        maxBuffer: 10 * 1024 * 1024,
+      }),
+    )
+  })
+})
 
-    expect(result).toContain('diff --git a/src/index.ts b/src/index.ts')
-    expect(result).not.toContain('test/index.test.ts')
-    expect(result).not.toContain('dist/bundle.js')
+describe('getLastDiff', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('should return empty string when all files are filtered out', () => {
-    const mockDiff = `diff --git a/test/file.test.ts b/test/file.test.ts
-+test code`
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
-    vi.mocked(childProcess.execSync).mockReturnValue(mockDiff)
-    vi.mocked(micromatch.isMatch).mockReturnValue(true)
+  it('should return diff between HEAD~1 and HEAD', () => {
+    const mockDiff = 'diff --git a/file.ts b/file.ts\n-removed line\n+added line'
+    vi.mocked(childProcess.execFileSync).mockReturnValue(mockDiff)
 
-    const result = getStagedDiff(['**/*.test.ts'])
+    const result = getLastDiff()
+
+    expect(childProcess.execFileSync).toHaveBeenCalledWith(
+      'git',
+      [
+        'diff',
+        'HEAD~1',
+        'HEAD',
+        '--no-color',
+        '--function-context',
+        '--diff-algorithm=histogram',
+        '--diff-filter=AMC',
+        '--',
+        '.',
+        ':(exclude)node_modules/**',
+        ':(exclude)*.lock',
+        ':(exclude)dist/**',
+      ],
+      {
+        encoding: 'utf8',
+        maxBuffer: 10 * 1024 * 1024,
+        stdio: ['pipe', 'pipe', 'ignore'],
+      },
+    )
+    expect(result).toBe(mockDiff)
+  })
+
+  it('should return empty string when git command fails', () => {
+    vi.mocked(childProcess.execFileSync).mockImplementation(() => {
+      throw new Error('fatal: ambiguous argument HEAD~1')
+    })
+
+    const result = getLastDiff()
 
     expect(result).toBe('')
   })
 
-  it('should handle diff sections without proper file path match', () => {
-    const mockDiff = `diff --git invalid format
-+code
-diff --git a/valid.ts b/valid.ts
-+valid code`
+  it('should handle empty diff when no changes', () => {
+    vi.mocked(childProcess.execFileSync).mockReturnValue('')
 
-    vi.mocked(childProcess.execSync).mockReturnValue(mockDiff)
-    vi.mocked(micromatch.isMatch).mockReturnValue(false)
-
-    const result = getStagedDiff(['*.ignored'])
-
-    expect(result).toContain('diff --git invalid format')
-    expect(result).toContain('diff --git a/valid.ts b/valid.ts')
-  })
-
-  it('should handle empty diff output', () => {
-    vi.mocked(childProcess.execSync).mockReturnValue('')
-
-    const result = getStagedDiff([])
+    const result = getLastDiff()
 
     expect(result).toBe('')
   })
 
-  it('should handle diff with dotfiles when using dot option', () => {
-    const mockDiff = `diff --git a/.gitignore b/.gitignore
-+pattern
-diff --git a/src/index.ts b/src/index.ts
-+code`
+  it('should not call addGitLineNumbers', () => {
+    const mockDiff = 'diff --git a/file.ts'
+    vi.mocked(childProcess.execFileSync).mockReturnValue(mockDiff)
 
-    vi.mocked(childProcess.execSync).mockReturnValue(mockDiff)
-    vi.mocked(micromatch.isMatch)
-      .mockReturnValueOnce(true)
-      .mockReturnValueOnce(false)
+    const result = getLastDiff()
 
-    const result = getStagedDiff(['.gitignore'])
-
-    expect(result).not.toContain('.gitignore')
-    expect(result).toContain('diff --git a/src/index.ts b/src/index.ts')
-    expect(micromatch.isMatch).toHaveBeenCalledWith('.gitignore', ['.gitignore'], { dot: true, matchBase: true })
+    expect(addGitLineNumbers).not.toHaveBeenCalled()
+    expect(result).toBe(mockDiff)
   })
 
-  it('should preserve diff format when filtering', () => {
-    const mockDiff = `diff --git a/file1.ts b/file1.ts
-index 1234567..abcdefg 100644
---- a/file1.ts
-+++ b/file1.ts
-@@ -1,3 +1,4 @@
-+new line
- existing line
-diff --git a/file2.ts b/file2.ts
-index 8901234..xyz5678 100644
---- a/file2.ts
-+++ b/file2.ts
-@@ -1,2 +1,3 @@
-+another line
- code`
+  it('should handle buffer overflow errors', () => {
+    vi.mocked(childProcess.execFileSync).mockImplementation(() => {
+      const error = new Error('stdout maxBuffer exceeded')
+      ;(error as any).code = 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER'
+      throw error
+    })
 
-    vi.mocked(childProcess.execSync).mockReturnValue(mockDiff)
-    vi.mocked(micromatch.isMatch)
-      .mockReturnValueOnce(false)
-      .mockReturnValueOnce(false)
+    const result = getLastDiff()
 
-    const result = getStagedDiff(['ignored/**'])
-
-    expect(result).toContain('diff --git a/file1.ts b/file1.ts')
-    expect(result).toContain('index 1234567..abcdefg 100644')
-    expect(result).toContain('diff --git a/file2.ts b/file2.ts')
+    expect(result).toBe('')
   })
 
-  it('should handle complex file paths with spaces', () => {
-    const mockDiff = `diff --git a/path with spaces/file.ts b/path with spaces/file.ts
-+code`
+  it('should use correct diff filter flags', () => {
+    vi.mocked(childProcess.execFileSync).mockReturnValue('diff')
 
-    vi.mocked(childProcess.execSync).mockReturnValue(mockDiff)
-    vi.mocked(micromatch.isMatch).mockReturnValue(false)
+    getLastDiff()
 
-    const result = getStagedDiff(['*.ignored'])
-
-    expect(result).toContain('diff --git a/path with spaces/file.ts')
-    expect(micromatch.isMatch).toHaveBeenCalledWith('path with spaces/file.ts', ['*.ignored'], { dot: true, matchBase: true })
+    const callArgs = vi.mocked(childProcess.execFileSync).mock.calls[0][1] as string[]
+    expect(callArgs).toContain('--diff-filter=AMC')
   })
 
-  it('should use correct git diff options', () => {
-    vi.mocked(childProcess.execSync).mockReturnValue('')
+  it('should exclude patterns from ignore config', () => {
+    vi.mocked(childProcess.execFileSync).mockReturnValue('diff')
 
-    getStagedDiff([])
+    getLastDiff()
 
-    expect(childProcess.execSync).toHaveBeenCalledWith(
-      expect.stringContaining('--cached'),
-      expect.any(Object),
-    )
-    expect(childProcess.execSync).toHaveBeenCalledWith(
-      expect.stringContaining('--unified=10'),
-      expect.any(Object),
-    )
-    expect(childProcess.execSync).toHaveBeenCalledWith(
-      expect.stringContaining('--diff-algorithm=histogram'),
-      expect.any(Object),
-    )
-    expect(childProcess.execSync).toHaveBeenCalledWith(
-      expect.stringContaining('--diff-filter=AMC'),
-      expect.any(Object),
-    )
+    const callArgs = vi.mocked(childProcess.execFileSync).mock.calls[0][1] as string[]
+    expect(callArgs).toContain(':(exclude)node_modules/**')
+    expect(callArgs).toContain(':(exclude)*.lock')
+    expect(callArgs).toContain(':(exclude)dist/**')
   })
 })

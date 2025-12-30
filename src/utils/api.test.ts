@@ -1,86 +1,72 @@
 import type { CommitGuardConfig, CommitGuardResponse } from '../types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { sendToCommitGuard } from './api'
+import { analyzeStagedDiff, bypassCommitGuard, sendToCommitGuard } from './api'
+import * as git from './git'
+import * as key from './key'
 
-globalThis.fetch = vi.fn()
+vi.mock('./git')
+vi.mock('./key')
 
 describe('sendToCommitGuard', () => {
   const mockDiff = 'diff --git a/file.ts'
-  const mockEslint = { errors: [], warnings: [] }
+  const mockEslint = { errors: [] }
   const mockConfig: CommitGuardConfig = {
     checks: {
       security: true,
       performance: true,
       codeQuality: true,
-      architecture: true,
+      architecture: false,
     },
+  }
+  const mockResponse: CommitGuardResponse = {
+    passed: true,
+    issues: [],
   }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    process.env.COMMITGUARD_API_KEY = 'test-api-key'
+    delete process.env.COMMITGUARD_API_KEY
     delete process.env.COMMITGUARD_API_URL
+    globalThis.fetch = vi.fn()
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
   })
 
-  it('should throw error when API key is missing', async () => {
-    delete process.env.COMMITGUARD_API_KEY
+  it('should successfully send data to CommitGuard API', async () => {
+    process.env.COMMITGUARD_API_KEY = 'test-api-key'
 
-    await expect(
-      sendToCommitGuard(mockDiff, mockEslint, mockConfig),
-    ).rejects.toThrow('Missing CommitGuard API key. Set COMMITGUARD_API_KEY environment variable.')
-  })
-
-  it('should use default API URL when not provided', async () => {
-    const mockResponse: CommitGuardResponse = {
-      issues: [],
-      passed: true,
-    }
-
-    vi.mocked(fetch).mockResolvedValue({
+    vi.mocked(fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => mockResponse,
     } as Response)
 
-    await sendToCommitGuard(mockDiff, mockEslint, mockConfig)
+    const result = await sendToCommitGuard(mockDiff, mockEslint, mockConfig)
 
     expect(fetch).toHaveBeenCalledWith(
-      'https://api.commitguard.dev/v1/check',
-      expect.any(Object),
+      'https://api.commitguard.dev/v1/analyze',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer test-api-key',
+          'User-Agent': 'commitguard-cli',
+        },
+        body: JSON.stringify({
+          diff: mockDiff,
+          eslint: mockEslint,
+          checks: mockConfig.checks,
+        }),
+      },
     )
+    expect(result).toEqual(mockResponse)
   })
 
-  it('should use custom API URL when provided', async () => {
-    process.env.COMMITGUARD_API_URL = 'https://custom.api.com/check'
+  it('should use global key when env key is not set', async () => {
+    vi.mocked(key.getGlobalKey).mockReturnValue('global-key')
 
-    const mockResponse: CommitGuardResponse = {
-      issues: [],
-      passed: true,
-    }
-
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    } as Response)
-
-    await sendToCommitGuard(mockDiff, mockEslint, mockConfig)
-
-    expect(fetch).toHaveBeenCalledWith(
-      'https://custom.api.com/check',
-      expect.any(Object),
-    )
-  })
-
-  it('should send correct request payload', async () => {
-    const mockResponse: CommitGuardResponse = {
-      issues: [],
-      passed: true,
-    }
-
-    vi.mocked(fetch).mockResolvedValue({
+    vi.mocked(fetch).mockResolvedValueOnce({
       ok: true,
       json: async () => mockResponse,
     } as Response)
@@ -89,144 +75,237 @@ describe('sendToCommitGuard', () => {
 
     expect(fetch).toHaveBeenCalledWith(
       expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer global-key',
+        }),
+      }),
+    )
+  })
+
+  it('should use custom API URL from environment', async () => {
+    process.env.COMMITGUARD_API_KEY = 'test-api-key'
+    process.env.COMMITGUARD_API_URL = 'https://custom.api.url/analyze'
+
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse,
+    } as Response)
+
+    await sendToCommitGuard(mockDiff, mockEslint, mockConfig)
+
+    expect(fetch).toHaveBeenCalledWith(
+      'https://custom.api.url/analyze',
+      expect.any(Object),
+    )
+  })
+
+  it('should throw error when no API key is found', async () => {
+    vi.mocked(key.getGlobalKey).mockReturnValue(null)
+
+    await expect(sendToCommitGuard(mockDiff, mockEslint, mockConfig))
+      .rejects
+      .toThrow('No API key found')
+  })
+
+  it('should throw error when API request fails', async () => {
+    process.env.COMMITGUARD_API_KEY = 'test-api-key'
+
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      text: async () => 'Bad request',
+    } as Response)
+
+    await expect(sendToCommitGuard(mockDiff, mockEslint, mockConfig))
+      .rejects
+      .toThrow('API request failed (400): Bad request')
+  })
+})
+
+describe('bypassCommitGuard', () => {
+  const mockBypassResponse = { success: true, message: 'Bypass recorded' }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    delete process.env.COMMITGUARD_API_KEY
+    delete process.env.COMMITGUARD_API_BYPASS_URL
+    globalThis.fetch = vi.fn()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('should successfully bypass CommitGuard', async () => {
+    process.env.COMMITGUARD_API_KEY = 'test-api-key'
+    vi.mocked(git.getLastDiff).mockReturnValue('diff content')
+
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockBypassResponse,
+    } as Response)
+
+    const result = await bypassCommitGuard()
+
+    expect(git.getLastDiff).toHaveBeenCalled()
+    expect(fetch).toHaveBeenCalledWith(
+      'https://api.commitguard.dev/v1/bypass',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer test-api-key',
+          'User-Agent': 'commitguard-cli',
         },
         body: JSON.stringify({
-          diff: mockDiff,
-          eslint: mockEslint,
-          checks: mockConfig.checks,
-          speed: 'balanced',
+          diff: 'diff content',
         }),
       },
     )
+    expect(result).toEqual(mockBypassResponse)
   })
 
-  it('should default speed to balanced when not provided', async () => {
-    const configWithoutSpeed: CommitGuardConfig = {
-      checks: {
-        security: true,
-        performance: true,
-        codeQuality: true,
-        architecture: true,
-      },
-    }
+  it('should use custom bypass URL from environment', async () => {
+    process.env.COMMITGUARD_API_KEY = 'test-api-key'
+    process.env.COMMITGUARD_API_BYPASS_URL = 'https://custom.bypass.url'
+    vi.mocked(git.getLastDiff).mockReturnValue('diff')
 
-    const mockResponse: CommitGuardResponse = {
-      issues: [],
-      passed: true,
-    }
-
-    vi.mocked(fetch).mockResolvedValue({
+    vi.mocked(fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => mockResponse,
+      json: async () => mockBypassResponse,
     } as Response)
 
-    await sendToCommitGuard(mockDiff, mockEslint, configWithoutSpeed)
+    await bypassCommitGuard()
 
-    const callArgs = vi.mocked(fetch).mock.calls[0]
-    const body = JSON.parse(callArgs[1]?.body as string)
-    expect(body.speed).toBe('balanced')
+    expect(fetch).toHaveBeenCalledWith(
+      'https://custom.bypass.url',
+      expect.any(Object),
+    )
   })
 
-  it('should return parsed response on success', async () => {
-    const mockResponse: CommitGuardResponse = {
-      passed: false,
-      issues: [
-        {
-          type: 'security',
-          category: 'security',
-          severity: 'critical',
-          message: 'Potential security vulnerability detected',
-          file: 'src/auth.ts',
-          line: 42,
-        },
-      ],
-    }
+  it('should throw error when no API key is found', async () => {
+    vi.mocked(key.getGlobalKey).mockReturnValue(null)
 
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse,
-    } as Response)
-
-    const result = await sendToCommitGuard(mockDiff, mockEslint, mockConfig)
-
-    expect(result).toEqual(mockResponse)
+    await expect(bypassCommitGuard())
+      .rejects
+      .toThrow('No API key found')
   })
 
-  it('should throw error when API request fails with status code', async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: false,
-      status: 401,
-      text: async () => 'Unauthorized',
-    } as Response)
+  it('should throw error when API request fails', async () => {
+    process.env.COMMITGUARD_API_KEY = 'test-api-key'
+    vi.mocked(git.getLastDiff).mockReturnValue('diff')
 
-    await expect(
-      sendToCommitGuard(mockDiff, mockEslint, mockConfig),
-    ).rejects.toThrow('API request failed (401): Unauthorized')
-  })
-
-  it('should throw error when API request fails with 500', async () => {
-    vi.mocked(fetch).mockResolvedValue({
+    vi.mocked(fetch).mockResolvedValueOnce({
       ok: false,
       status: 500,
-      text: async () => 'Internal Server Error',
+      text: async () => 'Server error',
     } as Response)
 
-    await expect(
-      sendToCommitGuard(mockDiff, mockEslint, mockConfig),
-    ).rejects.toThrow('API request failed (500): Internal Server Error')
+    await expect(bypassCommitGuard())
+      .rejects
+      .toThrow('API request failed (500): Server error')
+  })
+})
+
+describe('analyzeStagedDiff', () => {
+  const mockDiff = 'staged diff content'
+  const mockAnalyzeResponse = { success: true, message: 'Analysis complete' }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    delete process.env.COMMITGUARD_API_KEY
+    delete process.env.COMMITGUARD_API_ANALYZE_STAGED_URL
+    globalThis.fetch = vi.fn()
   })
 
-  it('should throw error when network request fails', async () => {
-    vi.mocked(fetch).mockRejectedValue(new Error('Network error'))
-
-    await expect(
-      sendToCommitGuard(mockDiff, mockEslint, mockConfig),
-    ).rejects.toThrow('Network error')
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
-  it('should handle different speed configurations', async () => {
-    const fastConfig: CommitGuardConfig = {
-      ...mockConfig,
-    }
+  it('should successfully analyze staged diff', async () => {
+    process.env.COMMITGUARD_API_KEY = 'test-api-key'
 
-    const mockResponse: CommitGuardResponse = {
-      issues: [],
-      passed: true,
-    }
-
-    vi.mocked(fetch).mockResolvedValue({
+    vi.mocked(fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => mockResponse,
+      json: async () => mockAnalyzeResponse,
     } as Response)
 
-    await sendToCommitGuard(mockDiff, mockEslint, fastConfig)
+    const result = await analyzeStagedDiff(mockDiff)
 
-    const callArgs = vi.mocked(fetch).mock.calls[0]
-    const body = JSON.parse(callArgs[1]?.body as string)
-    expect(body.speed).toBe('fast')
+    expect(fetch).toHaveBeenCalledWith(
+      'https://api.commitguard.dev/v1/analyze/staged',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer test-api-key',
+          'User-Agent': 'commitguard-cli',
+        },
+        body: JSON.stringify({
+          diff: mockDiff,
+        }),
+      },
+    )
+    expect(result).toEqual(mockAnalyzeResponse)
   })
 
-  it('should handle empty diff and eslint data', async () => {
-    const mockResponse: CommitGuardResponse = {
-      issues: [],
-      passed: true,
-    }
+  it('should use custom analyze staged URL from environment', async () => {
+    process.env.COMMITGUARD_API_KEY = 'test-api-key'
+    process.env.COMMITGUARD_API_ANALYZE_STAGED_URL = 'https://custom.analyze.url'
 
-    vi.mocked(fetch).mockResolvedValue({
+    vi.mocked(fetch).mockResolvedValueOnce({
       ok: true,
-      json: async () => mockResponse,
+      json: async () => mockAnalyzeResponse,
     } as Response)
 
-    await sendToCommitGuard('', {}, mockConfig)
+    await analyzeStagedDiff(mockDiff)
 
-    const callArgs = vi.mocked(fetch).mock.calls[0]
-    const body = JSON.parse(callArgs[1]?.body as string)
-    expect(body.diff).toBe('')
-    expect(body.eslint).toEqual({})
+    expect(fetch).toHaveBeenCalledWith(
+      'https://custom.analyze.url',
+      expect.any(Object),
+    )
+  })
+
+  it('should use global key when env key is not set', async () => {
+    vi.mocked(key.getGlobalKey).mockReturnValue('global-key')
+
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockAnalyzeResponse,
+    } as Response)
+
+    await analyzeStagedDiff(mockDiff)
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer global-key',
+        }),
+      }),
+    )
+  })
+
+  it('should throw error when no API key is found', async () => {
+    vi.mocked(key.getGlobalKey).mockReturnValue(null)
+
+    await expect(analyzeStagedDiff(mockDiff))
+      .rejects
+      .toThrow('No API key found')
+  })
+
+  it('should throw error when API request fails', async () => {
+    process.env.COMMITGUARD_API_KEY = 'test-api-key'
+
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      text: async () => 'Forbidden',
+    } as Response)
+
+    await expect(analyzeStagedDiff(mockDiff))
+      .rejects
+      .toThrow('API request failed (403): Forbidden')
   })
 })
