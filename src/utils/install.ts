@@ -93,7 +93,7 @@ fi
 
 if grep -q -- "--skip" "$commit_msg_file"; then
   echo "⚠️  CommitGuard bypassed with --skip"
-  # Remove --skip token from commit message
+
   sed 's/--skip//g' "$commit_msg_file" > "$commit_msg_file.tmp"
   mv "$commit_msg_file.tmp" "$commit_msg_file"
   
