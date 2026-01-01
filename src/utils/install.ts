@@ -87,10 +87,6 @@ ${COMMITGUARD_MARKER}
 
 commit_msg_file="$1"
 
-if ! grep -qv '^#' "$commit_msg_file" || [ ! -s "$commit_msg_file" ]; then
-  exit 0
-fi
-
 if grep -q -- "--skip" "$commit_msg_file"; then
   echo "⚠️  CommitGuard bypassed with --skip"
 
@@ -99,6 +95,10 @@ if grep -q -- "--skip" "$commit_msg_file"; then
   
   trap '(sleep 1 && "${node}" "${cliPath}" bypass > /dev/null 2>&1 &)' EXIT
   
+  exit 0
+fi
+
+if ! grep -qv '^#' "$commit_msg_file" || [ ! -s "$commit_msg_file" ]; then
   exit 0
 fi
 
