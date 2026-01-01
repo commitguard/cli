@@ -12,7 +12,7 @@ export async function sendToCommitGuard(diff: string, eslint: Record<string, any
     )
   }
 
-  const apiUrl = process.env.COMMITGUARD_API_URL || 'https://api.commitguard.dev/v1/analyze'
+  const apiUrl = process.env.COMMITGUARD_API_URL || 'https://api.commitguard.ai/v1/analyze'
 
   const response = await fetch(apiUrl, {
     method: 'POST',
@@ -45,7 +45,7 @@ export async function bypassCommitGuard() {
     )
   }
 
-  const apiUrl = process.env.COMMITGUARD_API_BYPASS_URL || 'https://api.commitguard.dev/v1/bypass'
+  const apiUrl = process.env.COMMITGUARD_API_BYPASS_URL || 'https://api.commitguard.ai/v1/bypass'
   const diff = getLastDiff()
 
   const response = await fetch(apiUrl, {
