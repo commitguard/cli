@@ -10,6 +10,7 @@ export interface CommitGuardConfig {
     warning: boolean
     suggestion: boolean
   }
+  customRule: string
 }
 
 export interface CommitGuardIssue {
