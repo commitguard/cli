@@ -5,10 +5,11 @@ import { consola } from 'consola'
 import updateNotifier from 'update-notifier'
 import pkg from '../package.json' assert { type: 'json' }
 import { bypassCommitGuard } from './utils/api'
-import { runPreCommit } from './utils/commit'
 import { manageConfig } from './utils/config'
 import { installHooks, listHooks, removeHooks } from './utils/install'
 import { manageGlobalKey } from './utils/key'
+import { onStaged, validateCommit } from './utils/staged'
+import 'dotenv/config'
 
 updateNotifier({ pkg }).notify()
 
@@ -24,7 +25,7 @@ const command = process.argv[2];
         await manageConfig()
         break
       case 'pre-commit':
-        await runPreCommit()
+        await validateCommit()
         break
       case 'list':
       case 'ls':
@@ -39,6 +40,9 @@ const command = process.argv[2];
         break
       case 'bypass':
         await bypassCommitGuard()
+        break
+      case 'staged':
+        await onStaged()
         break
       default:
         consola.box(`

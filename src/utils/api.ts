@@ -1,6 +1,5 @@
 import type { CommitGuardConfig, CommitGuardResponse } from '../types'
 import process from 'node:process'
-import ignoreConfig from '../data/ignore.json'
 import { getLastDiff } from './git'
 import { getGlobalKey } from './key'
 
@@ -13,7 +12,7 @@ export async function sendToCommitGuard(diff: string, eslint: Record<string, any
     )
   }
 
-  const apiUrl = process.env.COMMITGUARD_API_URL || 'https://api.commitguard.dev/v1/analyze'
+  const apiUrl = process.env.COMMITGUARD_API_URL || 'https://api.commitguard.ai/v1/analyze'
 
   const response = await fetch(apiUrl, {
     method: 'POST',
@@ -25,7 +24,7 @@ export async function sendToCommitGuard(diff: string, eslint: Record<string, any
     body: JSON.stringify({
       diff,
       eslint,
-      checks: config.checks,
+      config,
     }),
   })
 
@@ -46,8 +45,8 @@ export async function bypassCommitGuard() {
     )
   }
 
-  const apiUrl = process.env.COMMITGUARD_API_BYPASS_URL || 'https://api.commitguard.dev/v1/bypass'
-  const diff = getLastDiff(ignoreConfig.ignore)
+  const apiUrl = process.env.COMMITGUARD_API_BYPASS_URL || 'https://api.commitguard.ai/v1/bypass'
+  const diff = getLastDiff()
 
   const response = await fetch(apiUrl, {
     method: 'POST',

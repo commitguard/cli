@@ -1,10 +1,16 @@
 export interface CommitGuardConfig {
   checks: {
-    security?: boolean
-    performance?: boolean
-    codeQuality?: boolean
-    architecture?: boolean
+    security: boolean
+    performance: boolean
+    codeQuality: boolean
+    architecture: boolean
   }
+  severityLevels: {
+    critical: boolean
+    warning: boolean
+    suggestion: boolean
+  }
+  customRule: string
 }
 
 export interface CommitGuardIssue {

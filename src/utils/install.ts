@@ -7,9 +7,11 @@ import { getEslintRules } from './eslint'
 import { getGlobalKey, manageGlobalKey } from './key'
 
 const COMMITGUARD_MARKER = '# CommitGuard commit-msg hook'
+const POST_INDEX_MARKER = '# CommitGuard post-index-change hook'
 const GIT_DIR = '.git'
 const HOOKS_DIR = join(GIT_DIR, 'hooks')
 const COMMIT_MSG_HOOK_PATH = join(HOOKS_DIR, 'commit-msg')
+const POST_INDEX_HOOK_PATH = join(HOOKS_DIR, 'post-index-change')
 const MESSAGES = {
   noGit: 'No .git folder found. Run this inside a git repository.',
 }
@@ -59,6 +61,21 @@ export async function installHooks() {
     }
   }
 
+  if (existsSync(POST_INDEX_HOOK_PATH)) {
+    const content = readFileSync(POST_INDEX_HOOK_PATH, 'utf8')
+    if (!content.includes(POST_INDEX_MARKER)) {
+      const response = await confirm({
+        message: 'A post-index-change hook already exists. Do you want to overwrite it?',
+        initialValue: true,
+      })
+
+      if (!response) {
+        log.error('Installation cancelled. CommitGuard was not installed.')
+        return
+      }
+    }
+  }
+
   log.info('Installing CommitGuard...')
 
   const node = process.execPath.replace(/\\/g, '/')
@@ -70,15 +87,18 @@ ${COMMITGUARD_MARKER}
 
 commit_msg_file="$1"
 
-# Check if commit message contains --skip
 if grep -q -- "--skip" "$commit_msg_file"; then
   echo "⚠️  CommitGuard bypassed with --skip"
-  # Remove --skip token from commit message
+
   sed 's/--skip//g' "$commit_msg_file" > "$commit_msg_file.tmp"
   mv "$commit_msg_file.tmp" "$commit_msg_file"
   
   trap '(sleep 1 && "${node}" "${cliPath}" bypass > /dev/null 2>&1 &)' EXIT
   
+  exit 0
+fi
+
+if [ ! -s "$commit_msg_file" ] || ! grep -qv '^#' "$commit_msg_file"; then
   exit 0
 fi
 
@@ -98,8 +118,22 @@ exit 0
 `
 
   writeFileSync(COMMIT_MSG_HOOK_PATH, commitMsgContent, { mode: 0o755 })
-  log.success('CommitGuard installed successfully.')
 
+  const postIndexContent = `#!/bin/sh
+${POST_INDEX_MARKER}
+# Auto-generated - do not edit manually
+
+# Skip if only flags changed (not actual content)
+if [ "$1" = "1" ]; then
+  exit 0
+fi
+
+"${node}" "${cliPath}" staged > /dev/null 2>&1 &
+
+exit 0
+`
+
+  writeFileSync(POST_INDEX_HOOK_PATH, postIndexContent, { mode: 0o755 })
   log.info('Analyzing ESLint configuration for better checks...')
 
   await getEslintRules({
@@ -118,7 +152,7 @@ exit 0
     }
   }
 
-  outro('You are all set! Make your commits and let CommitGuard secure them for you.')
+  outro('You are all set! CommitGuard has been installed successfully.')
 }
 
 export async function listHooks() {
@@ -134,7 +168,10 @@ export async function listHooks() {
       statSync(filePath).isFile()
       && !file.endsWith('.sample')
       && !file.startsWith('.')
-      && readFileSync(filePath, 'utf8').includes(COMMITGUARD_MARKER)
+      && (
+        readFileSync(filePath, 'utf8').includes(COMMITGUARD_MARKER)
+        || readFileSync(filePath, 'utf8').includes(POST_INDEX_MARKER)
+      )
     )
   })
 
@@ -147,7 +184,7 @@ export async function listHooks() {
     log.success(hook)
   }
 
-  outro('Run "commitguard remove" to uninstall CommitGuard hooks.')
+  outro('Run "commitguard remove" to uninstall CommitGuard.')
 }
 
 export async function removeHooks() {
@@ -156,7 +193,10 @@ export async function removeHooks() {
     process.exit(1)
   }
 
-  if (!existsSync(COMMIT_MSG_HOOK_PATH)) {
+  const commitMsgExists = existsSync(COMMIT_MSG_HOOK_PATH)
+  const postIndexExists = existsSync(POST_INDEX_HOOK_PATH)
+
+  if (!commitMsgExists && !postIndexExists) {
     log.info('CommitGuard is not installed in this repository.')
     return
   }
@@ -171,7 +211,14 @@ export async function removeHooks() {
     return
   }
 
-  unlinkSync(COMMIT_MSG_HOOK_PATH)
+  if (commitMsgExists) {
+    unlinkSync(COMMIT_MSG_HOOK_PATH)
+  }
+
+  if (postIndexExists) {
+    unlinkSync(POST_INDEX_HOOK_PATH)
+  }
+
   log.success('CommitGuard uninstalled successfully!')
   outro('Your commits are no longer be secured by CommitGuard.')
 }
