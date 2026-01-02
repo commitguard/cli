@@ -98,7 +98,7 @@ if grep -q -- "--skip" "$commit_msg_file"; then
   exit 0
 fi
 
-if ! grep -qv '^#' "$commit_msg_file" || [ ! -s "$commit_msg_file" ]; then
+if [ ! -s "$commit_msg_file" ] || ! grep -qv '^#' "$commit_msg_file"; then
   exit 0
 fi
 
