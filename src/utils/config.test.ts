@@ -53,6 +53,7 @@ describe('loadConfig', () => {
         suggestion: true,
         warning: true,
       },
+      customRule: '',
     })
   })
 
@@ -91,6 +92,7 @@ describe('loadConfig', () => {
           suggestion: true,
           warning: true,
         },
+        customRule: '',
       },
     }
 
@@ -112,6 +114,7 @@ describe('loadConfig', () => {
         suggestion: true,
         warning: true,
       },
+      customRule: '',
     })
   })
 
@@ -141,6 +144,7 @@ describe('loadConfig', () => {
         suggestion: true,
         warning: true,
       },
+      customRule: '',
     })
   })
 
@@ -164,6 +168,7 @@ describe('loadConfig', () => {
         suggestion: true,
         warning: true,
       },
+      customRule: '',
     })
   })
 
@@ -271,6 +276,7 @@ describe('manageConfig', () => {
         warning: true,
         suggestion: true,
       },
+      customRule: '',
     }
 
     vi.mocked(fs.existsSync).mockReturnValue(true)
@@ -307,6 +313,7 @@ describe('manageConfig', () => {
         warning: false,
         suggestion: true,
       },
+      customRule: '',
     }
 
     vi.mocked(fs.existsSync).mockReturnValue(true)

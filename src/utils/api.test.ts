@@ -22,6 +22,7 @@ describe('sendToCommitGuard', () => {
       warning: true,
       suggestion: true,
     },
+    customRule: '',
   }
   const mockResponse: CommitGuardResponse = {
     passed: true,
@@ -50,7 +51,7 @@ describe('sendToCommitGuard', () => {
     const result = await sendToCommitGuard(mockDiff, mockEslint, mockConfig)
 
     expect(fetch).toHaveBeenCalledWith(
-      'https://api.commitguard.dev/v1/analyze',
+      'https://api.commitguard.ai/v1/analyze',
       {
         method: 'POST',
         headers: {
@@ -155,7 +156,7 @@ describe('bypassCommitGuard', () => {
 
     expect(git.getLastDiff).toHaveBeenCalled()
     expect(fetch).toHaveBeenCalledWith(
-      'https://api.commitguard.dev/v1/bypass',
+      'https://api.commitguard.ai/v1/bypass',
       {
         method: 'POST',
         headers: {
