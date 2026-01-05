@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import process from 'node:process'
 import { cancel, confirm, intro, isCancel, multiselect, outro, text } from '@clack/prompts'
 import { consola } from 'consola'
+import { MESSAGES } from './global'
 
 const MAX_CUSTOM_PROMPT_LENGTH = 500
 
@@ -13,6 +14,7 @@ const CONFIG_DIR = join(homedir(), '.commitguard')
 const PROJECTS_CONFIG_PATH = join(CONFIG_DIR, 'projects.json')
 
 let projectsConfigCache: Record<string, CommitGuardConfig> | null = null
+const GIT_DIR = '.git'
 
 function ensureConfigDir() {
   if (!existsSync(CONFIG_DIR)) {
@@ -103,6 +105,10 @@ export function loadConfig(): CommitGuardConfig {
 }
 
 export async function manageConfig() {
+  if (!existsSync(GIT_DIR)) {
+    cancel(MESSAGES.noGit)
+    return
+  }
   const projectId = getProjectId()
   const currentConfig = loadConfig()
 
