@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import process from 'node:process'
 import { cancel, confirm, log, note, outro } from '@clack/prompts'
 import { getEslintRules } from './eslint'
+import { MESSAGES } from './global'
 import { getGlobalKey, manageGlobalKey } from './key'
 
 const COMMITGUARD_MARKER = '# CommitGuard commit-msg hook'
@@ -12,14 +13,11 @@ const GIT_DIR = '.git'
 const HOOKS_DIR = join(GIT_DIR, 'hooks')
 const COMMIT_MSG_HOOK_PATH = join(HOOKS_DIR, 'commit-msg')
 const POST_INDEX_HOOK_PATH = join(HOOKS_DIR, 'post-index-change')
-const MESSAGES = {
-  noGit: 'No .git folder found. Run this inside a git repository.',
-}
 
 export async function installHooks() {
   if (!existsSync(GIT_DIR)) {
     cancel(MESSAGES.noGit)
-    process.exit(1)
+    return
   }
 
   if (!existsSync(HOOKS_DIR)) {

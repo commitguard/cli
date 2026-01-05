@@ -42,3 +42,7 @@ export function addGitLineNumbers(diff: string): string {
   }
   return result.join('\n')
 }
+
+export const MESSAGES = {
+  noGit: 'No .git folder found. Run this inside a git repository.',
+}
