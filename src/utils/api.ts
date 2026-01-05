@@ -8,7 +8,7 @@ export async function sendToCommitGuard(diff: string, eslint: Record<string, any
 
   if (!apiKey) {
     throw new Error(
-      'No API key found. Set one globally with "commitguard keys" or add COMMITGUARD_API_KEY to your .env file. Get your free API key at https://commitguard.dev',
+      'No API key found. Set one globally with "commitguard keys" or add COMMITGUARD_API_KEY to your .env file. Get your free API key at https://commitguard.ai',
     )
   }
 
@@ -41,7 +41,7 @@ export async function bypassCommitGuard() {
 
   if (!apiKey) {
     throw new Error(
-      'No API key found. Set one globally with "commitguard keys" or add COMMITGUARD_API_KEY to your .env file. Get your free API key at https://commitguard.dev',
+      'No API key found. Set one globally with "commitguard keys" or add COMMITGUARD_API_KEY to your .env file. Get your free API key at https://commitguard.ai',
     )
   }
 
