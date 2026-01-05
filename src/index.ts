@@ -49,15 +49,15 @@ const command = process.argv[2];
 CommitGuard - AI-powered git commit checker v${pkg.version}
 
 Usage:
-  commitguard init          Initialize CommitGuard in the current git repository
-  commitguard remove        Remove CommitGuard from the current git repository
-  commitguard config        Configure CommitGuard settings for the current repository
+  commitguard init          Initialize CommitGuard in the current project
+  commitguard remove        Remove CommitGuard from the current project
+  commitguard config        Configure CommitGuard prefrences for the current project
   commitguard keys          Manage your CommitGuard API key
 
 Links:
   Documentation: https://commitguard.ai/docs
   Dashboard:     https://commitguard.ai/dashboard
-  Support:       https://commitguard.ai/support`)
+  Support:       hello@commitguard.ai`)
     }
   }
   catch (error) {
