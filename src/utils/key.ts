@@ -58,7 +58,7 @@ export async function manageGlobalKey() {
       }
     }
     else {
-      note('To get your free API key, visit https://commitguard.dev', 'Get your free API key')
+      note('To get your free API key, visit https://commitguard.ai', 'Get your free API key')
       const apiKey = await text({
         message: 'Enter your CommitGuard API key:',
         placeholder: 'sk_XXXXXXXXXXXXXXXXXXXXXX',
