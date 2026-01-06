@@ -38,7 +38,7 @@ function getDefaultConfig(): CommitGuardConfig {
     severityLevels: {
       critical: true,
       warning: true,
-      suggestion: true,
+      suggestion: false,
     },
     customRule: '',
   }
