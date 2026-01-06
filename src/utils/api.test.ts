@@ -125,7 +125,7 @@ describe('sendToCommitGuard', () => {
 
     await expect(sendToCommitGuard(mockDiff, mockEslint, mockConfig))
       .rejects
-      .toThrow('API request failed (400): Bad request')
+      .toThrow('Request error: Bad request')
   })
 })
 
