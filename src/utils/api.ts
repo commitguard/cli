@@ -30,7 +30,26 @@ export async function sendToCommitGuard(diff: string, eslint: Record<string, any
 
   if (!response.ok) {
     const errorText = await response.text()
-    throw new Error(`API request failed (${response.status}): ${errorText}`)
+
+    let errorMessage = 'Failed to analyze commit'
+
+    if (response.status === 401) {
+      errorMessage = 'Invalid API key. Check your key with "commitguard keys" or get a new one at https://commitguard.ai'
+    }
+    else if (response.status === 429) {
+      errorMessage = 'Rate limit exceeded. Please try again later'
+    }
+    else if (response.status === 500) {
+      errorMessage = 'CommitGuard service error. Please try again later'
+    }
+    else if (response.status >= 400 && response.status < 500) {
+      errorMessage = `Request error: ${errorText || 'Invalid request'}`
+    }
+    else {
+      errorMessage = `Service unavailable (${response.status}). Please try again later`
+    }
+
+    throw new Error(errorMessage)
   }
 
   return await response.json() as CommitGuardResponse
