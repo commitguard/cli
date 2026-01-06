@@ -50,7 +50,7 @@ describe('loadConfig', () => {
       },
       severityLevels: {
         critical: true,
-        suggestion: true,
+        suggestion: false,
         warning: true,
       },
       customRule: '',
@@ -89,7 +89,7 @@ describe('loadConfig', () => {
         },
         severityLevels: {
           critical: true,
-          suggestion: true,
+          suggestion: false,
           warning: true,
         },
         customRule: '',
@@ -111,7 +111,7 @@ describe('loadConfig', () => {
       },
       severityLevels: {
         critical: true,
-        suggestion: true,
+        suggestion: false,
         warning: true,
       },
       customRule: '',
@@ -141,7 +141,7 @@ describe('loadConfig', () => {
       },
       severityLevels: {
         critical: true,
-        suggestion: true,
+        suggestion: false,
         warning: true,
       },
       customRule: '',
@@ -165,7 +165,7 @@ describe('loadConfig', () => {
       },
       severityLevels: {
         critical: true,
-        suggestion: true,
+        suggestion: false,
         warning: true,
       },
       customRule: '',
