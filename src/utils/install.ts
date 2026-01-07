@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
 import { cancel, confirm, log, note, outro } from '@clack/prompts'
 import { getEslintRules } from './eslint'
 import { MESSAGES } from './global'
@@ -77,7 +78,7 @@ export async function installHooks() {
   log.info('Installing CommitGuard...')
 
   const node = process.execPath.replace(/\\/g, '/')
-  const cliPath = require.resolve('commitguard').replace(/\\/g, '/')
+  const cliPath = fileURLToPath(import.meta.url).replace(/\\/g, '/')
 
   const commitMsgContent = `#!/bin/sh
 ${COMMITGUARD_MARKER}
