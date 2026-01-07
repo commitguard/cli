@@ -29,7 +29,7 @@
     "prepublishOnly": "pnpm run build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "release": "pnpm typecheck && bumpp --tag --push --publish && pnpm publish"
+    "release": "pnpm typecheck && bumpp --tag --push --publish && npm publish"
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
