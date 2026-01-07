@@ -132,13 +132,22 @@ exit 0
 `
 
   writeFileSync(POST_INDEX_HOOK_PATH, postIndexContent, { mode: 0o755 })
-  log.info('Analyzing ESLint configuration for better checks...')
+  log.info('Checking ESLint configuration...')
 
-  await getEslintRules({
-    overrideCache: true,
-  })
-
-  log.success('ESLint configuration loaded.')
+  try {
+    const eslintRules = await getEslintRules({
+      overrideCache: true,
+    })
+    if (Object.keys(eslintRules.rules).length > 0) {
+      log.success('ESLint configuration loaded.')
+    }
+    else {
+      log.info('No ESLint rules detected.')
+    }
+  }
+  catch {
+    log.warn('Failed to load ESLint configuration.')
+  }
 
   if (!getGlobalKey() && process.env.COMMITGUARD_API_KEY === undefined) {
     const response = await confirm({
