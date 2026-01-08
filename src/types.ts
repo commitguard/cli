@@ -1,5 +1,4 @@
 export interface CommitGuardConfig {
-  context: 'minimal' | 'normal'
   checks: {
     security: boolean
     performance: boolean

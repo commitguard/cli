@@ -265,7 +265,6 @@ describe('manageConfig', () => {
 
   it('should not save when configuration has not changed', async () => {
     const existingConfig: CommitGuardConfig = {
-      context: 'normal',
       checks: {
         security: true,
         performance: true,
@@ -303,7 +302,6 @@ describe('manageConfig', () => {
 
   it('should load initial values from existing config', async () => {
     const existingConfig: CommitGuardConfig = {
-      context: 'normal',
       checks: {
         security: true,
         performance: false,

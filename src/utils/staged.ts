@@ -101,7 +101,7 @@ function groupIssuesByFile(issues: any[] = []) {
 }
 
 export async function onStaged() {
-  const diff = getStagedDiff(config.context)
+  const diff = getStagedDiff()
 
   if (!diff.trim()) {
     clearCache()
@@ -132,7 +132,7 @@ export async function onStaged() {
 }
 
 export function getCachedAnalysis(diff?: string, diffHash?: string): { analysis: any, age: number } | null {
-  const effectiveDiff = diff ?? getStagedDiff(config.context)
+  const effectiveDiff = diff ?? getStagedDiff()
   if (!effectiveDiff.trim()) {
     return {
       analysis: { status: 'pass', issues: [] },
@@ -161,7 +161,7 @@ export function getCachedAnalysis(diff?: string, diffHash?: string): { analysis:
 }
 
 export async function validateCommit(): Promise<void> {
-  const diff = getStagedDiff(config.context)
+  const diff = getStagedDiff()
   const diffHash = diff.trim() ? createDiffHash(diff) : ''
 
   const cached = getCachedAnalysis(diff, diffHash)

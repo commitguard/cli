@@ -1,16 +1,14 @@
-import type { CommitGuardConfig } from '../types'
 import { execFileSync } from 'node:child_process'
 import ignoreConfig from '../data/ignore.json'
 import { addGitLineNumbers } from './global'
 
-export function getStagedDiff(context: CommitGuardConfig['context']): string {
-  const gitContextCommand = context === 'minimal' ? [] : ['--function-context']
+export function getStagedDiff(): string {
   try {
     const args = [
       'diff',
       '--cached',
       '--no-color',
-      ...gitContextCommand,
+      '--function-context',
       '--diff-algorithm=histogram',
       '--diff-filter=AMC',
       '--',
@@ -29,15 +27,14 @@ export function getStagedDiff(context: CommitGuardConfig['context']): string {
   }
 }
 
-export function getLastDiff(context: CommitGuardConfig['context']): string {
-  const gitContextCommand = context === 'minimal' ? [] : ['--function-context']
+export function getLastDiff(): string {
   try {
     const args = [
       'diff',
       'HEAD~1',
       'HEAD',
       '--no-color',
-      ...gitContextCommand,
+      '--function-context',
       '--diff-algorithm=histogram',
       '--diff-filter=AMC',
       '--',

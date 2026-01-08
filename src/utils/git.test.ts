@@ -27,7 +27,7 @@ describe('getStagedDiff', () => {
     const mockDiff = 'diff --git a/file.ts b/file.ts\n+added line'
     vi.mocked(childProcess.execFileSync).mockReturnValue(mockDiff)
 
-    const result = getStagedDiff('normal')
+    const result = getStagedDiff()
 
     expect(childProcess.execFileSync).toHaveBeenCalledWith(
       'git',
@@ -59,7 +59,7 @@ describe('getStagedDiff', () => {
       throw new Error('Not a git repository')
     })
 
-    const result = getStagedDiff('normal')
+    const result = getStagedDiff()
 
     expect(result).toBe('')
   })
@@ -67,7 +67,7 @@ describe('getStagedDiff', () => {
   it('should handle empty diff', () => {
     vi.mocked(childProcess.execFileSync).mockReturnValue('')
 
-    const result = getStagedDiff('normal')
+    const result = getStagedDiff()
 
     expect(addGitLineNumbers).toHaveBeenCalledWith('')
     expect(result).toBe('numbered-')
@@ -77,7 +77,7 @@ describe('getStagedDiff', () => {
     const largeDiff = 'a'.repeat(5 * 1024 * 1024)
     vi.mocked(childProcess.execFileSync).mockReturnValue(largeDiff)
 
-    getStagedDiff('normal')
+    getStagedDiff()
 
     expect(childProcess.execFileSync).toHaveBeenCalledWith(
       'git',
@@ -89,7 +89,7 @@ describe('getStagedDiff', () => {
   })
 })
 
-describe('getLastDiffTest', () => {
+describe('getLastDiff', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -102,7 +102,7 @@ describe('getLastDiffTest', () => {
     const mockDiff = 'diff --git a/file.ts b/file.ts\n-removed line\n+added line'
     vi.mocked(childProcess.execFileSync).mockReturnValue(mockDiff)
 
-    const result = getLastDiff('normal')
+    const result = getLastDiff()
 
     expect(childProcess.execFileSync).toHaveBeenCalledWith(
       'git',
@@ -134,7 +134,7 @@ describe('getLastDiffTest', () => {
       throw new Error('fatal: ambiguous argument HEAD~1')
     })
 
-    const result = getLastDiff('normal')
+    const result = getLastDiff()
 
     expect(result).toBe('')
   })
@@ -142,7 +142,7 @@ describe('getLastDiffTest', () => {
   it('should handle empty diff when no changes', () => {
     vi.mocked(childProcess.execFileSync).mockReturnValue('')
 
-    const result = getLastDiff('normal')
+    const result = getLastDiff()
 
     expect(result).toBe('')
   })
@@ -151,7 +151,7 @@ describe('getLastDiffTest', () => {
     const mockDiff = 'diff --git a/file.ts'
     vi.mocked(childProcess.execFileSync).mockReturnValue(mockDiff)
 
-    const result = getLastDiff('normal')
+    const result = getLastDiff()
 
     expect(addGitLineNumbers).not.toHaveBeenCalled()
     expect(result).toBe(mockDiff)
@@ -164,7 +164,7 @@ describe('getLastDiffTest', () => {
       throw error
     })
 
-    const result = getLastDiff('normal')
+    const result = getLastDiff()
 
     expect(result).toBe('')
   })
@@ -172,7 +172,7 @@ describe('getLastDiffTest', () => {
   it('should use correct diff filter flags', () => {
     vi.mocked(childProcess.execFileSync).mockReturnValue('diff')
 
-    getLastDiff('normal')
+    getLastDiff()
 
     const callArgs = vi.mocked(childProcess.execFileSync).mock.calls[0][1] as string[]
     expect(callArgs).toContain('--diff-filter=AMC')
@@ -181,7 +181,7 @@ describe('getLastDiffTest', () => {
   it('should exclude patterns from ignore config', () => {
     vi.mocked(childProcess.execFileSync).mockReturnValue('diff')
 
-    getLastDiff('normal')
+    getLastDiff()
 
     const callArgs = vi.mocked(childProcess.execFileSync).mock.calls[0][1] as string[]
     expect(callArgs).toContain(':(exclude)node_modules/**')

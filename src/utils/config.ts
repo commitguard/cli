@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import process from 'node:process'
-import { cancel, confirm, intro, isCancel, log, multiselect, outro, select, text } from '@clack/prompts'
+import { cancel, confirm, intro, isCancel, log, multiselect, outro, text } from '@clack/prompts'
 import { consola } from 'consola'
 import { MESSAGES } from './global'
 
@@ -29,7 +29,6 @@ function ensureConfigDir() {
 
 function getDefaultConfig(): CommitGuardConfig {
   return {
-    context: 'normal',
     checks: {
       security: true,
       performance: true,
@@ -150,20 +149,8 @@ export async function manageConfig() {
     return
   }
 
-  const contextLevel = await select({
-    message: 'Select context level for analysis:',
-    options: [
-      { value: 'minimal', label: 'Minimal (Just Actual Changes)' },
-      { value: 'normal', label: 'Normal (Actual Changes + Context Lines)' },
-    ],
-    initialValue: currentConfig.context,
-  })
-  if (isCancel(contextLevel)) {
-    cancel('Configuration cancelled')
-    return
-  }
-
   let customRule = currentConfig.customRule
+
   if (currentConfig.customRule) {
     log.info(`Current custom rule: ${currentConfig.customRule}`)
 
@@ -236,7 +223,6 @@ export async function manageConfig() {
   }
 
   const newConfig: CommitGuardConfig = {
-    context: contextLevel,
     checks: {
       security: enabledChecks.includes('security'),
       performance: enabledChecks.includes('performance'),
