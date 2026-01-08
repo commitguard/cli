@@ -10,6 +10,7 @@ import { getStagedDiff } from './git'
 import { createDiffHash } from './global'
 
 const CACHE_PATH = join('.git', 'commitguard-cache.json')
+const config = loadConfig()
 
 interface CacheData {
   hash: string
@@ -100,7 +101,7 @@ function groupIssuesByFile(issues: any[] = []) {
 }
 
 export async function onStaged() {
-  const diff = getStagedDiff()
+  const diff = getStagedDiff(config.context)
 
   if (!diff.trim()) {
     clearCache()
@@ -115,7 +116,6 @@ export async function onStaged() {
   }
 
   try {
-    const config = loadConfig()
     const eslint = await getEslintRules()
     const response = await sendToCommitGuard(diff, eslint.rules, config)
 
@@ -132,7 +132,7 @@ export async function onStaged() {
 }
 
 export function getCachedAnalysis(diff?: string, diffHash?: string): { analysis: any, age: number } | null {
-  const effectiveDiff = diff ?? getStagedDiff()
+  const effectiveDiff = diff ?? getStagedDiff(config.context)
   if (!effectiveDiff.trim()) {
     return {
       analysis: { status: 'pass', issues: [] },
@@ -161,7 +161,7 @@ export function getCachedAnalysis(diff?: string, diffHash?: string): { analysis:
 }
 
 export async function validateCommit(): Promise<void> {
-  const diff = getStagedDiff()
+  const diff = getStagedDiff(config.context)
   const diffHash = diff.trim() ? createDiffHash(diff) : ''
 
   const cached = getCachedAnalysis(diff, diffHash)
