@@ -1,5 +1,6 @@
 import type { CommitGuardConfig, CommitGuardResponse } from '../types'
 import process from 'node:process'
+import { loadConfig } from './config'
 import { getLastDiff } from './git'
 import { getGlobalKey } from './key'
 
@@ -84,7 +85,8 @@ export async function bypassCommitGuard() {
   }
 
   const apiUrl = process.env.COMMITGUARD_API_BYPASS_URL || 'https://api.commitguard.ai/v1/bypass'
-  const diff = getLastDiff()
+  const config = loadConfig()
+  const diff = getLastDiff(config.context)
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT)
