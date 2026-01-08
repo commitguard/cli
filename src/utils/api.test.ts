@@ -11,6 +11,7 @@ describe('sendToCommitGuard', () => {
   const mockDiff = 'diff --git a/file.ts'
   const mockEslint = { errors: [] }
   const mockConfig: CommitGuardConfig = {
+    context: 'normal',
     checks: {
       security: true,
       performance: true,
