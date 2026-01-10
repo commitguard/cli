@@ -45,6 +45,9 @@ export async function sendToCommitGuard(diff: string, eslint: Record<string, any
       if (response.status === 401) {
         errorMessage = 'Invalid API key. Check your key with "commitguard keys" or get a new one at https://commitguard.ai'
       }
+      else if (response.status === 402) {
+        errorMessage = 'You’ve reached your plan limit. Upgrade now with 20% off using code SAVE20 at checkout: https://commitguard.ai/dashboard'
+      }
       else if (response.status === 429) {
         errorMessage = 'Rate limit exceeded. Please try again later'
       }
