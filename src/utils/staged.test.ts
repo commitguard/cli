@@ -157,7 +157,13 @@ describe('onStaged', () => {
 
     await onStaged()
 
-    expect(consola.error).toHaveBeenCalledWith('Analysis failed:', expect.any(Error))
+    expect(consola.box).toHaveBeenCalledWith({
+      title: 'Analysis Failed',
+      message: 'API error',
+      style: {
+        borderColor: 'red',
+      },
+    })
   })
 })
 

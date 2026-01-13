@@ -127,7 +127,16 @@ export async function onStaged() {
     })
   }
   catch (error) {
-    consola.error('Analysis failed:', error)
+    const message = error instanceof Error ? error.message : String(error)
+    if (process.stdout.isTTY) {
+      consola.box({
+        title: 'Analysis Failed',
+        message,
+      })
+    }
+    else {
+      consola.log(message)
+    }
   }
 }
 
