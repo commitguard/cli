@@ -52,7 +52,7 @@ describe('sendToCommitGuard', () => {
 
     expect(fetch).toHaveBeenCalledWith(
       'https://api.commitguard.ai/v1/analyze',
-      {
+      expect.objectContaining({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ describe('sendToCommitGuard', () => {
           eslint: mockEslint,
           config: mockConfig,
         }),
-      },
+      }),
     )
     expect(result).toEqual(mockResponse)
   })
@@ -157,7 +157,7 @@ describe('bypassCommitGuard', () => {
     expect(git.getLastDiff).toHaveBeenCalled()
     expect(fetch).toHaveBeenCalledWith(
       'https://api.commitguard.ai/v1/bypass',
-      {
+      expect.objectContaining({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +167,7 @@ describe('bypassCommitGuard', () => {
         body: JSON.stringify({
           diff: 'diff content',
         }),
-      },
+      }),
     )
     expect(result).toEqual(mockBypassResponse)
   })

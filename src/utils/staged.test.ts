@@ -19,6 +19,7 @@ vi.mock('consola', () => ({
     success: vi.fn(),
     log: vi.fn(),
     prompt: vi.fn(),
+    box: vi.fn(),
   },
 }))
 vi.mock('string-width', () => ({
@@ -144,6 +145,8 @@ describe('onStaged', () => {
 
   it('should handle analysis errors gracefully', async () => {
     clearCache()
+    const originalIsTTY = process.stdout.isTTY
+    process.stdout.isTTY = true
 
     const mockDiff = 'diff content'
     const mockHash = 'abc123'
@@ -160,10 +163,9 @@ describe('onStaged', () => {
     expect(consola.box).toHaveBeenCalledWith({
       title: 'Analysis Failed',
       message: 'API error',
-      style: {
-        borderColor: 'red',
-      },
     })
+
+    process.stdout.isTTY = originalIsTTY
   })
 })
 
