@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { basename } from 'node:path'
 import process from 'node:process'
 import { consola } from 'consola'
 import updateNotifier from 'update-notifier'
@@ -13,7 +14,12 @@ import 'dotenv/config'
 
 updateNotifier({ pkg }).notify()
 
-const command = process.argv[2];
+const binName = basename(process.argv[1])
+let command = process.argv[2]
+
+if (binName.includes('create-commitguard')) {
+  command = 'init'
+}
 
 (async () => {
   try {

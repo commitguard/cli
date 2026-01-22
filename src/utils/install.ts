@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { cancel, confirm, log, note, outro } from '@clack/prompts'
+import { findUp } from 'find-up'
 import { getEslintRules } from './eslint'
 import { MESSAGES } from './global'
 import { getGlobalKey, manageGlobalKey } from './key'
@@ -15,7 +16,61 @@ const HOOKS_DIR = join(GIT_DIR, 'hooks')
 const COMMIT_MSG_HOOK_PATH = join(HOOKS_DIR, 'commit-msg')
 const POST_INDEX_HOOK_PATH = join(HOOKS_DIR, 'post-index-change')
 
+async function ensureDependency() {
+  const pkgPath = await findUp('package.json', { cwd: process.cwd() })
+  if (!pkgPath)
+    return
+
+  try {
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies }
+
+    if (deps['@commitguard/cli'])
+      return
+
+    const install = await confirm({
+      message: '@commitguard/cli is not listed in your package.json. Do you want to install it as a dev dependency?',
+      initialValue: true,
+    })
+
+    if (!install)
+      return
+
+    log.info('Installing @commitguard/cli...')
+
+    // Detect package manager
+    let pm = 'npm'
+    let cmd = 'install -D'
+
+    if (existsSync(join(process.cwd(), 'pnpm-lock.yaml'))) {
+      pm = 'pnpm'
+      cmd = 'add -D'
+    }
+    else if (existsSync(join(process.cwd(), 'yarn.lock'))) {
+      pm = 'yarn'
+      cmd = 'add -D'
+    }
+    else if (existsSync(join(process.cwd(), 'bun.lockb'))) {
+      pm = 'bun'
+      cmd = 'add -D'
+    }
+
+    try {
+      execSync(`${pm} ${cmd} @commitguard/cli`, { stdio: 'inherit', cwd: process.cwd() })
+      log.success('Successfully installed @commitguard/cli')
+    }
+    catch (e) {
+      log.error(`Failed to install @commitguard/cli: ${e}`)
+    }
+  }
+  catch {
+    // Ignore error parsing package.json
+  }
+}
+
 export async function installHooks() {
+  await ensureDependency()
+
   if (!existsSync(GIT_DIR)) {
     cancel(MESSAGES.noGit)
     return
