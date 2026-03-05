@@ -13,9 +13,9 @@ import 'dotenv/config'
 
 updateNotifier({ pkg }).notify()
 
-const command = process.argv[2];
+export async function runCli(forcedCommand?: string) {
+  const command = forcedCommand ?? process.argv[2]
 
-(async () => {
   try {
     switch (command) {
       case 'init':
@@ -64,4 +64,4 @@ Links:
     consola.error('CommitGuard error:', error)
     process.exit(1)
   }
-})()
+}
