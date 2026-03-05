@@ -10,6 +10,7 @@
   },
   "exports": {
     ".": "./dist/index.mjs",
+    "./create": "./dist/create.mjs",
     "./package.json": "./package.json"
   },
   "main": "./dist/index.mjs",
@@ -17,7 +18,7 @@
   "types": "./dist/index.d.mts",
   "bin": {
     "commitguard": "./dist/index.mjs",
-    "create-commitguard": "./dist/index.mjs"
+    "create-commitguard": "./dist/create.mjs"
   },
   "files": [
     "dist"
