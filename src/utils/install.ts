@@ -38,7 +38,6 @@ async function ensureDependency() {
 
     log.info('Installing @commitguard/cli...')
 
-    // Detect package manager
     let pm = 'npm'
     let cmd = 'install -D'
 
