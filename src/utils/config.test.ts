@@ -193,7 +193,11 @@ describe('manageConfig', () => {
     vi.resetModules()
     vi.mocked(os.homedir).mockReturnValue(mockHomedir)
     vi.mocked(childProcess.execFileSync).mockReturnValue(mockProjectId)
-    vi.mocked(fs.existsSync).mockReturnValue(false)
+    vi.mocked(fs.existsSync).mockImplementation((path) => {
+      if (typeof path === 'string' && path.includes('.git'))
+        return true
+      return false
+    })
   })
 
   afterEach(() => {
@@ -201,12 +205,14 @@ describe('manageConfig', () => {
   })
 
   it('should save new configuration when user confirms', async () => {
+    vi.mocked(fs.existsSync).mockImplementation((path) => {
+      return typeof path === 'string' && path.includes('.git')
+    })
     vi.mocked(clack.intro).mockReturnValue(undefined)
     vi.mocked(clack.multiselect).mockResolvedValue(['security', 'performance'])
     vi.mocked(clack.isCancel).mockReturnValue(false)
     vi.mocked(clack.confirm).mockResolvedValue(true)
     vi.mocked(clack.outro).mockReturnValue(undefined)
-    vi.mocked(fs.existsSync).mockReturnValue(false)
     const { manageConfig } = await import('./config')
 
     await manageConfig()
@@ -279,7 +285,11 @@ describe('manageConfig', () => {
       customRule: '',
     }
 
-    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.existsSync).mockImplementation((path) => {
+      if (typeof path === 'string' && (path.includes('.git') || path.includes('projects.json')))
+        return true
+      return false
+    })
     vi.mocked(fs.readFileSync).mockReturnValue(
       JSON.stringify({ [mockProjectId]: existingConfig }),
     )
@@ -316,7 +326,11 @@ describe('manageConfig', () => {
       customRule: '',
     }
 
-    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.existsSync).mockImplementation((path) => {
+      if (typeof path === 'string' && (path.includes('.git') || path.includes('projects.json')))
+        return true
+      return false
+    })
     vi.mocked(fs.readFileSync).mockReturnValue(
       JSON.stringify({ [mockProjectId]: existingConfig }),
     )
@@ -354,11 +368,14 @@ describe('manageConfig', () => {
   })
 
   it('should create config directory if it does not exist', async () => {
+    vi.mocked(fs.existsSync).mockImplementation((path) => {
+      // .git exists, but config dir (implicitly checked) does not
+      return typeof path === 'string' && path.includes('.git')
+    })
     vi.mocked(clack.intro).mockReturnValue(undefined)
     vi.mocked(clack.multiselect).mockResolvedValue(['performance'])
     vi.mocked(clack.isCancel).mockReturnValue(false)
     vi.mocked(clack.confirm).mockResolvedValue(true)
-    vi.mocked(fs.existsSync).mockReturnValue(false)
     vi.mocked(clack.outro).mockReturnValue(undefined)
     const { manageConfig } = await import('./config')
 

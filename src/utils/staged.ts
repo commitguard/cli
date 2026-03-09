@@ -10,7 +10,6 @@ import { getStagedDiff } from './git'
 import { createDiffHash } from './global'
 
 const CACHE_PATH = join('.git', 'commitguard-cache.json')
-const config = loadConfig()
 
 interface CacheData {
   hash: string
@@ -116,6 +115,7 @@ export async function onStaged() {
   }
 
   try {
+    const config = loadConfig()
     const eslint = await getEslintRules()
     const response = await sendToCommitGuard(diff, eslint.rules, config)
 
