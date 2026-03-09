@@ -36,7 +36,7 @@ describe('loadConfig', () => {
   })
 
   it('should return default config when no projects config exists', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false)
+    vi.mocked(fs.existsSync).mockImplementation((p) => p === '.git')
     const { loadConfig } = await import('./config')
 
     const config = loadConfig()
@@ -47,6 +47,7 @@ describe('loadConfig', () => {
         performance: true,
         codeQuality: true,
         architecture: true,
+        functionSimilarity: false,
       },
       severityLevels: {
         critical: true,
@@ -108,6 +109,7 @@ describe('loadConfig', () => {
         performance: true,
         codeQuality: true,
         architecture: true,
+        functionSimilarity: false,
       },
       severityLevels: {
         critical: true,
@@ -123,7 +125,7 @@ describe('loadConfig', () => {
     vi.mocked(childProcess.execFileSync).mockImplementation(() => {
       throw new Error('Not a git repository')
     })
-    vi.mocked(fs.existsSync).mockReturnValue(false)
+    vi.mocked(fs.existsSync).mockImplementation((p) => p === '.git')
     vi.spyOn(process, 'cwd').mockReturnValue(mockCwd)
     const { loadConfig } = await import('./config')
 
@@ -138,6 +140,7 @@ describe('loadConfig', () => {
         performance: true,
         codeQuality: true,
         architecture: true,
+        functionSimilarity: false,
       },
       severityLevels: {
         critical: true,
@@ -162,6 +165,7 @@ describe('loadConfig', () => {
         performance: true,
         codeQuality: true,
         architecture: true,
+        functionSimilarity: false,
       },
       severityLevels: {
         critical: true,
@@ -173,7 +177,7 @@ describe('loadConfig', () => {
   })
 
   it('should cache project ID on subsequent calls', async () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false)
+    vi.mocked(fs.existsSync).mockImplementation((p) => p === '.git')
     const { loadConfig } = await import('./config')
 
     loadConfig()
@@ -193,7 +197,7 @@ describe('manageConfig', () => {
     vi.resetModules()
     vi.mocked(os.homedir).mockReturnValue(mockHomedir)
     vi.mocked(childProcess.execFileSync).mockReturnValue(mockProjectId)
-    vi.mocked(fs.existsSync).mockReturnValue(false)
+    vi.mocked(fs.existsSync).mockImplementation((p) => p === '.git')
   })
 
   afterEach(() => {
@@ -206,7 +210,7 @@ describe('manageConfig', () => {
     vi.mocked(clack.isCancel).mockReturnValue(false)
     vi.mocked(clack.confirm).mockResolvedValue(true)
     vi.mocked(clack.outro).mockReturnValue(undefined)
-    vi.mocked(fs.existsSync).mockReturnValue(false)
+    vi.mocked(fs.existsSync).mockImplementation((p) => p === '.git')
     const { manageConfig } = await import('./config')
 
     await manageConfig()
@@ -358,7 +362,7 @@ describe('manageConfig', () => {
     vi.mocked(clack.multiselect).mockResolvedValue(['performance'])
     vi.mocked(clack.isCancel).mockReturnValue(false)
     vi.mocked(clack.confirm).mockResolvedValue(true)
-    vi.mocked(fs.existsSync).mockReturnValue(false)
+    vi.mocked(fs.existsSync).mockImplementation((p) => p === '.git')
     vi.mocked(clack.outro).mockReturnValue(undefined)
     const { manageConfig } = await import('./config')
 

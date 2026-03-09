@@ -64,6 +64,7 @@ describe('sendToCommitGuard', () => {
           eslint: mockEslint,
           config: mockConfig,
         }),
+        signal: expect.any(AbortSignal),
       },
     )
     expect(result).toEqual(mockResponse)
@@ -167,6 +168,7 @@ describe('bypassCommitGuard', () => {
         body: JSON.stringify({
           diff: 'diff content',
         }),
+        signal: expect.any(AbortSignal),
       },
     )
     expect(result).toEqual(mockBypassResponse)

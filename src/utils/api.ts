@@ -1,11 +1,16 @@
-import type { CommitGuardConfig, CommitGuardResponse } from '../types'
+import type { CommitGuardConfig, CommitGuardResponse, CommitSymbols } from '../types'
 import process from 'node:process'
 import { getLastDiff } from './git'
 import { getGlobalKey } from './key'
 
 const DEFAULT_TIMEOUT = 20000
 
-export async function sendToCommitGuard(diff: string, eslint: Record<string, any>, config: CommitGuardConfig): Promise<CommitGuardResponse> {
+export async function sendToCommitGuard(
+  diff: string,
+  eslint: Record<string, any>,
+  config: CommitGuardConfig,
+  symbols?: CommitSymbols,
+): Promise<CommitGuardResponse> {
   const apiKey = process.env.COMMITGUARD_API_KEY || getGlobalKey() || null
 
   if (!apiKey) {
@@ -31,6 +36,7 @@ export async function sendToCommitGuard(diff: string, eslint: Record<string, any
         diff,
         eslint,
         config,
+        ...(symbols && { symbols }),
       }),
       signal: controller.signal,
     })

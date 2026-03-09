@@ -19,6 +19,7 @@ vi.mock('consola', () => ({
     success: vi.fn(),
     log: vi.fn(),
     prompt: vi.fn(),
+    box: vi.fn(),
   },
 }))
 vi.mock('string-width', () => ({
@@ -107,7 +108,7 @@ describe('onStaged', () => {
 
     await onStaged()
 
-    expect(sendToCommitGuard).toHaveBeenCalledWith(mockDiff, mockEslint.rules, mockConfig)
+    expect(sendToCommitGuard).toHaveBeenCalledWith(mockDiff, mockEslint.rules, mockConfig, expect.any(Object))
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       '.git/commitguard-cache.json',
       expect.stringContaining(mockHash),
@@ -155,15 +156,17 @@ describe('onStaged', () => {
     vi.mocked(getEslintRules).mockResolvedValue({ rules: {}, source: null })
     vi.mocked(sendToCommitGuard).mockRejectedValue(new Error('API error'))
 
+    const originalIsTTY = process.stdout.isTTY
+    process.stdout.isTTY = true
+
     await onStaged()
 
     expect(consola.box).toHaveBeenCalledWith({
       title: 'Analysis Failed',
       message: 'API error',
-      style: {
-        borderColor: 'red',
-      },
     })
+
+    process.stdout.isTTY = originalIsTTY
   })
 })
 

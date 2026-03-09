@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { cancel, confirm, log, note, outro } from '@clack/prompts'
 import { findUp } from 'find-up'
 import { getEslintRules } from './eslint'
+import { runFunctionScan } from './functions'
 import { MESSAGES } from './global'
 import { getGlobalKey, manageGlobalKey } from './key'
 
@@ -215,6 +216,15 @@ exit 0
   }
 
   outro('You are all set! CommitGuard has been installed successfully.')
+
+  // Scan project for function names so the baseline is ready when the user
+  // enables the functionSimilarity check via `commitguard config`.
+  try {
+    await runFunctionScan()
+  }
+  catch {
+    // Non-fatal — don't block the rest of the init
+  }
 }
 
 export async function listHooks() {

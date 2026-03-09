@@ -34,6 +34,7 @@ function getDefaultConfig(): CommitGuardConfig {
       performance: true,
       codeQuality: true,
       architecture: true,
+      functionSimilarity: false,
     },
     severityLevels: {
       critical: true,
@@ -121,6 +122,7 @@ export async function manageConfig() {
       { value: 'performance', label: 'Performance' },
       { value: 'codeQuality', label: 'Code Quality' },
       { value: 'architecture', label: 'Architecture' },
+      { value: 'functionSimilarity', label: 'Function Name Similarity (local check)' },
     ],
     initialValues: Object.entries(currentConfig.checks)
       .filter(([_, enabled]) => enabled)
@@ -228,6 +230,7 @@ export async function manageConfig() {
       performance: enabledChecks.includes('performance'),
       codeQuality: enabledChecks.includes('codeQuality'),
       architecture: enabledChecks.includes('architecture'),
+      functionSimilarity: enabledChecks.includes('functionSimilarity'),
     },
     severityLevels: {
       suggestion: enabledSeverity.includes('suggestion'),
