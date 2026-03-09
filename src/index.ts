@@ -6,6 +6,7 @@ import updateNotifier from 'update-notifier'
 import pkg from '../package.json' assert { type: 'json' }
 import { bypassCommitGuard } from './utils/api'
 import { manageConfig } from './utils/config'
+import { runFunctionScan } from './utils/functions'
 import { installHooks, listHooks, removeHooks } from './utils/install'
 import { manageGlobalKey } from './utils/key'
 import { onStaged, validateCommit } from './utils/staged'
@@ -44,6 +45,9 @@ export async function runCli(forcedCommand?: string) {
       case 'staged':
         await onStaged()
         break
+      case 'scan':
+        await runFunctionScan()
+        break
       default:
         consola.box(`
 CommitGuard - AI-powered git commit checker v${pkg.version}
@@ -53,6 +57,7 @@ Usage:
   commitguard remove        Remove CommitGuard from the current project
   commitguard config        Configure CommitGuard prefrences for the current project
   commitguard keys          Manage your CommitGuard API key
+  commitguard scan          Re-scan project and refresh tracked function names
 
 Links:
   Documentation: https://commitguard.ai/docs
@@ -65,3 +70,5 @@ Links:
     process.exit(1)
   }
 }
+
+runCli()

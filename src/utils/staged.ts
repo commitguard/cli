@@ -6,11 +6,11 @@ import stringWidth from 'string-width'
 import { sendToCommitGuard } from './api'
 import { loadConfig } from './config'
 import { getEslintRules } from './eslint'
+import { addFunctionNames, extractCommitSymbols, extractFunctionNamesFromDiff, loadFunctionNames } from './functions'
 import { getStagedDiff } from './git'
 import { createDiffHash } from './global'
 
 const CACHE_PATH = join('.git', 'commitguard-cache.json')
-const config = loadConfig()
 
 interface CacheData {
   hash: string
@@ -116,8 +116,10 @@ export async function onStaged() {
   }
 
   try {
+    const config = loadConfig()
     const eslint = await getEslintRules()
-    const response = await sendToCommitGuard(diff, eslint.rules, config)
+    const symbols = extractCommitSymbols(diff, loadFunctionNames())
+    const response = await sendToCommitGuard(diff, eslint.rules, config, symbols)
 
     writeCache({
       hash: diffHash,
@@ -184,9 +186,18 @@ export async function validateCommit(): Promise<void> {
     }
 
     await displayResults(newCached.analysis)
-    return
   }
-  await displayResults(cached.analysis)
+  else {
+    await displayResults(cached.analysis)
+  }
+
+  const currentConfig = loadConfig()
+  if (currentConfig?.checks?.functionSimilarity && diff.trim()) {
+    // Persist new function names so the baseline grows; comparison is server-side
+    const newNames = extractFunctionNamesFromDiff(diff)
+    if (newNames.length > 0)
+      addFunctionNames(newNames)
+  }
 }
 
 async function displayResults(analysis: any): Promise<void> {
